@@ -4,6 +4,7 @@ Este módulo define a entidade ``Task``, que representa um cartão do quadro
 Kanban.
 """
 
+from django.core.validators import MaxValueValidator
 from django.db import models
 
 
@@ -78,6 +79,7 @@ class Task(models.Model):
     story_points = models.PositiveSmallIntegerField(
         null=True,
         blank=True,
+        validators=[MaxValueValidator(100)],
         verbose_name='Story Points',
         help_text='Estimativa de esforço, de 0 a 100 (opcional).',
     )

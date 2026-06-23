@@ -55,33 +55,3 @@ class TaskSerializer(serializers.ModelSerializer):
             'closed_at',
         ]
         read_only_fields = ['id', 'created_at']
-
-    def validate_story_points(self, value):
-        """Valida o limite superior do campo ``story_points``.
-
-        Descrição:
-            Garante que a estimativa de esforço não ultrapasse o teto de 100.
-            O piso (0) já é assegurado pelo tipo ``PositiveSmallIntegerField``.
-
-        Objetivo:
-            Impedir a persistência de estimativas fora da faixa permitida (0–100).
-
-        Parâmetros:
-            self (TaskSerializer): A instância do serializer.
-            value (int | None): Valor candidato para ``story_points``.
-
-        Assertivas de entrada:
-            - ``value`` é ``None`` ou um inteiro maior ou igual a 0.
-
-        Assertivas de saída:
-            - Se válido, o valor retornado é idêntico ao recebido.
-            - Se inválido, é levantada ``serializers.ValidationError``.
-
-        Retornos:
-            int | None: O próprio ``value`` quando dentro da faixa permitida.
-        """
-        if value is not None and value > 100:
-            raise serializers.ValidationError(
-                'Story points deve estar entre 0 e 100.'
-            )
-        return value
