@@ -1,0 +1,87 @@
+"""Serializers do domínio de Tarefas (Tasks).
+
+Define a tradução entre instâncias do modelo :class:`tasks.models.Task` e a
+representação JSON consumida/produzida pela API REST, além de validar os dados
+de entrada antes da persistência.
+"""
+
+from rest_framework import serializers
+
+from .models import Task
+
+
+class TaskSerializer(serializers.ModelSerializer):
+    """Serializa e valida tarefas para a API REST.
+
+    Descrição:
+        Converte instâncias de ``Task`` em estruturas JSON (serialização) e
+        valida/desserializa dados recebidos do cliente em instâncias de ``Task``.
+
+    Objetivo:
+        Centralizar as regras de exposição e validação dos campos de tarefa,
+        garantindo que apenas dados válidos cheguem ao modelo.
+
+    Assertivas de entrada (ao validar dados recebidos):
+        - ``name`` está presente, é string e tem no máximo 255 caracteres.
+        - ``status``, quando presente, pertence a :class:`Task.Status`.
+        - ``story_points``, quando presente, é inteiro entre 0 e 100.
+        - ``id`` e ``created_at`` não são aceitos como entrada (somente leitura).
+
+    Assertivas de saída (ao serializar uma instância):
+        - O dicionário resultante contém todos os campos declarados em ``fields``.
+        - ``id`` e ``created_at`` refletem os valores persistidos.
+    """
+
+    class Meta:
+        """Configuração de mapeamento entre o serializer e o modelo ``Task``.
+
+        Descrição:
+            Indica o modelo de origem, os campos expostos e quais são apenas
+            de leitura.
+
+        Objetivo:
+            Declarar de forma explícita o contrato de dados da API de tarefas.
+        """
+
+        model = Task
+        fields = [
+            'id',
+            'name',
+            'status',
+            'description',
+            'story_points',
+            'created_at',
+            'due_date',
+            'closed_at',
+        ]
+        read_only_fields = ['id', 'created_at']
+
+    def validate_story_points(self, value):
+        """Valida o limite superior do campo ``story_points``.
+
+        Descrição:
+            Garante que a estimativa de esforço não ultrapasse o teto de 100.
+            O piso (0) já é assegurado pelo tipo ``PositiveSmallIntegerField``.
+
+        Objetivo:
+            Impedir a persistência de estimativas fora da faixa permitida (0–100).
+
+        Parâmetros:
+            self (TaskSerializer): A instância do serializer.
+            value (int | None): Valor candidato para ``story_points``.
+
+        Assertivas de entrada:
+            - ``value`` é ``None`` ou um inteiro maior ou igual a 0.
+
+        Assertivas de saída:
+            - Se válido, o valor retornado é idêntico ao recebido.
+            - Se inválido, é levantada ``serializers.ValidationError``.
+
+        Retornos:
+            int | None: O próprio ``value`` quando dentro da faixa permitida.
+        """
+        if value is not None and value > 100:
+            raise serializers.ValidationError(
+                'Story points deve estar entre 0 e 100.'
+            )
+        return value

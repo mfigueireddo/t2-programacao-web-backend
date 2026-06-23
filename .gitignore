@@ -1,0 +1,33 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.Python
+
+# --- Ambiente virtual ---
+.venv/
+venv/
+env/
+ENV/
+
+# --- Banco de dados ---
+*.sqlite3
+*.sqlite3-journal
+*.db
+
+# --- Django ---
+*.log
+local_settings.py
+media/
+staticfiles/
+
+# --- Variáveis de ambiente / segredos ---
+.env
+*.env
+
+# --- Ferramentas / IDEs ---
+.vscode/
+.idea/
+.DS_Store
+*.swp
