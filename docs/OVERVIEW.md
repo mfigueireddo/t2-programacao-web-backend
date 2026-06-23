@@ -24,7 +24,7 @@ Sugiro ler **na ordem de inicialização e depois na ordem do fluxo da requisiç
 
 Já dão o contexto de negócio: o que a API faz, quais endpoints existem e quais campos a Tarefa tem.
 
-**Atente-se:** a tabela de endpoints em USAGE.md (seção 2) usa rotas com verbos no caminho (`/tasks/create`, `/tasks/update/<id>`) — isso é uma decisão de design deliberada e foge do REST puro (há um TODO sobre revisar isso).
+**Atente-se:** a tabela de endpoints em USAGE.md (seção 2) segue o padrão REST do DRF — o recurso é identificado pela URL (`/tasks/`, `/tasks/<id>/`) e a operação vem do verbo HTTP. As rotas são geradas por um `DefaultRouter` em `tasks/urls.py`.
 
 ### 2. [manage.py](../manage.py)
 

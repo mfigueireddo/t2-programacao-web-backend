@@ -42,11 +42,14 @@ Todas as rotas estão sob o prefixo `tasks/`.
 | Operação | Método | Rota | Descrição |
 |----------|--------|------|-----------|
 | Listar todas | `GET` | `/tasks/` | Retorna todas as tarefas |
-| Criar | `POST` | `/tasks/create` | Cria uma nova tarefa |
-| Detalhar | `GET` | `/tasks/<id>` | Retorna uma tarefa específica |
-| Atualizar (total) | `PUT` | `/tasks/update/<id>` | Substitui todos os campos editáveis |
-| Atualizar (parcial) | `PATCH` | `/tasks/update/<id>` | Atualiza apenas os campos enviados |
-| Remover | `DELETE` | `/tasks/delete/<id>` | Exclui uma tarefa |
+| Criar | `POST` | `/tasks/` | Cria uma nova tarefa |
+| Detalhar | `GET` | `/tasks/<id>/` | Retorna uma tarefa específica |
+| Atualizar (total) | `PUT` | `/tasks/<id>/` | Substitui todos os campos editáveis |
+| Atualizar (parcial) | `PATCH` | `/tasks/<id>/` | Atualiza apenas os campos enviados |
+| Remover | `DELETE` | `/tasks/<id>/` | Exclui uma tarefa |
+
+> As rotas seguem o padrão REST: o recurso é identificado apenas pela URL e a operação é definida pelo **verbo HTTP**. 
+> Note a **barra final** (`/tasks/1/`), padrão do roteador do DRF.
 
 ### Campos da Tarefa
 
@@ -68,10 +71,10 @@ Todas as rotas estão sob o prefixo `tasks/`.
 > No Windows, prefira o **PowerShell** ou o **Git Bash**. 
 Os exemplos abaixo usam a sintaxe do Bash.
 
-### 3.1 Criar uma tarefa (`POST /tasks/create`)
+### 3.1 Criar uma tarefa (`POST /tasks/`)
 
 ```bash
-curl -X POST http://127.0.0.1:8000/tasks/create \
+curl -X POST http://127.0.0.1:8000/tasks/ \
   -H "Content-Type: application/json" \
   -d '{
         "name": "Implementar autenticação",
@@ -103,28 +106,28 @@ Resposta (`201 Created`):
 curl http://127.0.0.1:8000/tasks/
 ```
 
-### 3.3 Detalhar uma tarefa (`GET /tasks/<id>`)
+### 3.3 Detalhar uma tarefa (`GET /tasks/<id>/`)
 
 ```bash
-curl http://127.0.0.1:8000/tasks/1
+curl http://127.0.0.1:8000/tasks/1/
 ```
 
-### 3.4 Atualização parcial (`PATCH /tasks/update/<id>`)
+### 3.4 Atualização parcial (`PATCH /tasks/<id>/`)
 
 Altera apenas o status:
 
 ```bash
-curl -X PATCH http://127.0.0.1:8000/tasks/update/1 \
+curl -X PATCH http://127.0.0.1:8000/tasks/1/ \
   -H "Content-Type: application/json" \
   -d '{"status": "EM_PROGRESSO"}'
 ```
 
-### 3.5 Atualização total (`PUT /tasks/update/<id>`)
+### 3.5 Atualização total (`PUT /tasks/<id>/`)
 
 Reenvia todos os campos editáveis:
 
 ```bash
-curl -X PUT http://127.0.0.1:8000/tasks/update/1 \
+curl -X PUT http://127.0.0.1:8000/tasks/1/ \
   -H "Content-Type: application/json" \
   -d '{
         "name": "Implementar autenticação JWT",
@@ -134,10 +137,10 @@ curl -X PUT http://127.0.0.1:8000/tasks/update/1 \
       }'
 ```
 
-### 3.6 Remover uma tarefa (`DELETE /tasks/delete/<id>`)
+### 3.6 Remover uma tarefa (`DELETE /tasks/<id>/`)
 
 ```bash
-curl -X DELETE http://127.0.0.1:8000/tasks/delete/1
+curl -X DELETE http://127.0.0.1:8000/tasks/1/
 ```
 
 Resposta: `204 No Content` (sem corpo).

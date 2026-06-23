@@ -1,1 +1,1 @@
-﻿- [ ] Revisar arquitetura utilizada no urls.py. Não é feito do "jeito REST" puro.
+﻿

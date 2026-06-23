@@ -26,7 +26,7 @@ Um mapa de "quem faz o quê" — útil para localizar em que etapa cada coisa ac
 | Etapa | Arquivo | Responsabilidade |
 |-------|---------|------------------|
 | Roteamento raiz | [config/urls.py](../config/urls.py) | Casa o prefixo `tasks/` e delega para o app; também expõe `admin/`, `schema/`, `swagger/`. |
-| Roteamento do app | [tasks/urls.py](../tasks/urls.py) | Mapeia cada caminho + método HTTP para uma **ação** do `TaskViewSet` (`list`, `create`, `retrieve`, `update`, `partial_update`, `destroy`). |
+| Roteamento do app | [tasks/urls.py](../tasks/urls.py) | Um `DefaultRouter` gera as rotas REST (`/tasks/` e `/tasks/<id>/`) e associa cada método HTTP a uma **ação** do `TaskViewSet` (`list`, `create`, `retrieve`, `update`, `partial_update`, `destroy`). |
 | Controle / orquestração | [tasks/views.py](../tasks/views.py) | `TaskViewSet` (um `ModelViewSet`): recebe a `request`, busca no `queryset`, chama o serializer e monta a `Response`. Nenhum método é escrito à mão. |
 | Validação e (de)serialização | [tasks/serializers.py](../tasks/serializers.py) | Converte JSON ↔ objeto, aplica `read_only_fields` e as validações de campo (`validate_story_points`). **É aqui que mora a maior parte das validações.** |
 | Regras de domínio e schema | [tasks/models.py](../tasks/models.py) | Define os campos, tipos, `choices` de `status`, valores automáticos (`created_at`), opcionais (`due_date`, `closed_at`, `story_points`) e a ordenação padrão. |
@@ -38,7 +38,7 @@ A validação não acontece num único lugar. Em ordem de execução:
 
 1. **Roteamento (URL)** — antes de qualquer view. 
 
-O conversor `<int:pk>` em `tasks/urls.py` garante que o `id` na URL seja um inteiro; se não for, o Django responde `404` sem nem chegar à view.
+As rotas de item geradas pelo `DefaultRouter` capturam o `pk` com o padrão `[^/.]+`. A view (`get_object`) busca a tarefa por esse `pk`; se nenhuma corresponder — inclusive quando o valor não é um inteiro válido —, o DRF responde `404` sem chegar à lógica de domínio.
 
 2. **Serializer (campo a campo)** — o grosso da validação. 
 
