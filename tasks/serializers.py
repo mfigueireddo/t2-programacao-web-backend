@@ -5,11 +5,19 @@ representação JSON consumida/produzida pela API REST, além de validar os dado
 de entrada antes da persistência.
 """
 
+from drf_spectacular.utils import extend_schema_serializer
 from rest_framework import serializers
 
 from .models import Task
 
 
+@extend_schema_serializer(
+    description=(
+        "Representação de uma tarefa do quadro Kanban, usada tanto na entrada "
+        "(criação/atualização) quanto na saída da API. Os campos ``id`` e "
+        "``created_at`` são somente leitura."
+    ),
+)
 class TaskSerializer(serializers.ModelSerializer):
     """Serializa e valida tarefas para a API REST.
 
