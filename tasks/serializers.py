@@ -89,6 +89,117 @@ class TaskSerializer(serializers.ModelSerializer):
         if self.instance is not None:
             self.fields['creator'].read_only = True
 
+    def validate(self, attrs):
+        """Aplica as restrições de edição do usuário comum (``USUARIO``).
+
+        Descrição:
+            Em atualizações feitas por um usuário de papel ``USUARIO``, restringe
+            o que pode ser alterado: somente o ``status`` da tarefa e a inclusão
+            do próprio usuário na lista de responsáveis. Administradores e
+            criações não sofrem qualquer restrição aqui.
+
+        Objetivo:
+            Cumprir, no nível dos campos, as regras de autorização que a
+            permissão de endpoint não consegue impor (pois dependem de *quais*
+            campos mudaram e de *quem* está editando).
+
+        Parâmetros:
+            self (TaskSerializer): A instância do serializer.
+            attrs (dict): Os dados já validados campo a campo. Em ``PATCH``,
+                contém apenas os campos enviados; em ``PUT``, todos os graváveis.
+
+        Assertivas de entrada:
+            - Em atualização, ``self.instance`` referencia a tarefa alvo.
+            - ``self.context['request'].user`` identifica o requisitante.
+
+        Assertivas de saída:
+            - Para ``USUARIO`` em atualização, levanta ``ValidationError`` se
+              algum campo diferente de ``status``/``responsibles`` for alterado,
+              se responsáveis forem removidos, ou se for adicionado um
+              responsável diferente do próprio usuário.
+            - Nos demais casos, retorna ``attrs`` inalterado.
+
+        Retornos:
+            dict: Os atributos validados (eventualmente após rejeição por erro).
+        """
+        attrs = super().validate(attrs)
+
+        # Restrições só se aplicam a atualizações (instância existente).
+        if self.instance is None:
+            return attrs
+
+        request = self.context.get('request')
+        user = getattr(request, 'user', None)
+
+        # Sem usuário autenticado ou sendo administrador: nada a restringir aqui
+        # (o acesso já foi autorizado pela permissão de endpoint).
+        if not getattr(user, 'is_authenticated', False):
+            return attrs
+        if user.role != User.Role.USUARIO:
+            return attrs
+
+        self._validate_usuario_update(attrs, user)
+        return attrs
+
+    def _validate_usuario_update(self, attrs, user):
+        """Verifica as alterações permitidas a um usuário comum em uma tarefa.
+
+        Descrição:
+            Auxilia :meth:`validate` impondo, para o papel ``USUARIO``, que a
+            única alteração de conteúdo seja o ``status`` e que a lista de
+            responsáveis só possa receber o próprio usuário (sem remover outros
+            nem adicionar terceiros).
+
+        Parâmetros:
+            self (TaskSerializer): A instância do serializer.
+            attrs (dict): Os dados validados da atualização.
+            user (users.models.User): O usuário comum que faz a requisição.
+
+        Assertivas de entrada:
+            - ``self.instance`` referencia a tarefa em edição.
+
+        Assertivas de saída:
+            - Levanta ``serializers.ValidationError`` na primeira violação
+              encontrada; não retorna valor em caso de sucesso.
+
+        Retornos:
+            None.
+        """
+        # Campos cuja alteração é vedada ao usuário comum. ``status`` é livre e
+        # ``responsibles`` tem tratamento próprio (inclusão do próprio usuário).
+        for field, value in attrs.items():
+            if field in ('status', 'responsibles'):
+                continue
+            # Só é violação se o valor enviado de fato difere do atual (um PUT
+            # reenvia campos inalterados, que não devem ser considerados edição).
+            if getattr(self.instance, field) != value:
+                raise serializers.ValidationError({
+                    field: (
+                        'Usuário comum só pode alterar o status da tarefa ou '
+                        'adicionar a si mesmo como responsável.'
+                    )
+                })
+
+        if 'responsibles' not in attrs:
+            return
+
+        atuais = set(self.instance.responsibles.all())
+        novos = set(attrs['responsibles'])
+        adicionados = novos - atuais
+        removidos = atuais - novos
+
+        if removidos:
+            raise serializers.ValidationError({
+                'responsibles': 'Usuário comum não pode remover responsáveis.'
+            })
+        if adicionados - {user}:
+            raise serializers.ValidationError({
+                'responsibles': (
+                    'Usuário comum só pode adicionar a si mesmo como '
+                    'responsável.'
+                )
+            })
+
     def validate_description(self, value):
         """Normaliza ``None`` para string vazia no campo ``description``.
 

@@ -109,6 +109,12 @@ AUTH_PASSWORD_VALIDATORS = [
 REST_FRAMEWORK = {
     # Usa o gerador de schema do drf-spectacular para alimentar o Swagger.
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+    # Autenticação provisória: identifica o usuário pelo cabeçalho X-User-Id
+    # (cf. users.authentication). Deve ser substituída por autenticação real
+    # (ex.: Token/JWT) quando o login for implementado.
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'users.authentication.ProvisionalHeaderAuthentication',
+    ],
 }
 
 # drf-spectacular (Swagger / OpenAPI)

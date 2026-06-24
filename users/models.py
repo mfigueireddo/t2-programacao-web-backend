@@ -72,6 +72,29 @@ class User(models.Model):
         help_text='Papel do usuário: ADMINISTRADOR ou USUARIO.',
     )
 
+    @property
+    def is_authenticated(self):
+        """Indica que toda instância de usuário representa um acesso autenticado.
+
+        Descrição:
+            Espelha a convenção do ``django.contrib.auth``: um usuário concreto
+            (em oposição ao ``AnonymousUser``) é sempre considerado autenticado.
+            Permite que as permissões do DRF distingam ``request.user`` real de
+            acesso anônimo via ``getattr(user, 'is_authenticated', False)``.
+
+        Objetivo:
+            Tornar este modelo compatível com as verificações de autorização do
+            DRF enquanto a autenticação definitiva não é implementada, sem que
+            permissões e serializers precisem mudar depois.
+
+        Assertivas de saída:
+            - Retorna sempre ``True``.
+
+        Retornos:
+            bool: Sempre ``True``.
+        """
+        return True
+
     class Meta:
         """Metadados de configuração do modelo ``User``.
 
