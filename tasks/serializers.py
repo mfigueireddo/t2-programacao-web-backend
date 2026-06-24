@@ -34,6 +34,10 @@ class TaskSerializer(serializers.ModelSerializer):
         - ``name`` está presente, é string e tem no máximo 255 caracteres.
         - ``status``, quando presente, pertence a :class:`Task.Status`.
         - ``story_points``, quando presente, é inteiro entre 0 e 100.
+        - ``creator`` está presente e referencia o ``id`` de um usuário
+          existente (obrigatório).
+        - ``responsibles``, quando presente, é uma lista de ``id`` de usuários
+          existentes (pode ser vazia ou omitida).
         - ``id``, ``created_at`` e ``closed_at`` não são aceitos como entrada
           (somente leitura); ``closed_at`` é derivado do ``status``.
 
@@ -63,5 +67,7 @@ class TaskSerializer(serializers.ModelSerializer):
             'created_at',
             'due_date',
             'closed_at',
+            'creator',
+            'responsibles',
         ]
         read_only_fields = ['id', 'created_at', 'closed_at']

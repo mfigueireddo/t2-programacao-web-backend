@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'drf_spectacular',          # Geração do schema OpenAPI e da interface Swagger.
     'corsheaders',              # Habilita CORS para consumo pelo frontend externo.
     # Aplicações do projeto
+    'users',                    # Domínio de Usuários.
     'tasks',                    # Domínio de Tarefas.
 ]
 

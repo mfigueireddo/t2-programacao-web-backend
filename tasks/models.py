@@ -8,6 +8,8 @@ from django.core.validators import MaxValueValidator
 from django.db import models
 from django.utils import timezone
 
+from users.models import User
+
 
 class Task(models.Model):
     """Representa uma tarefa (cartão) do quadro Kanban.
@@ -26,6 +28,10 @@ class Task(models.Model):
         - ``story_points``, quando informado, é um inteiro entre 0 e 100.
         - ``due_date`` e ``closed_at``, quando informados, são ``datetime``
           válidos (com fuso horário, pois ``USE_TZ`` está ativo).
+        - ``creator`` referencia exatamente um :class:`users.models.User`
+          existente (obrigatório).
+        - ``responsibles``, quando informado, referencia zero ou mais
+          :class:`users.models.User` existentes.
 
     Assertivas de saída:
         - A instância possui ``id`` inteiro positivo e único.
@@ -100,6 +106,20 @@ class Task(models.Model):
         blank=True,
         verbose_name='Data de Fechamento',
         help_text='Preenchida quando a tarefa é concluída (opcional).',
+    )
+    creator = models.ForeignKey(
+        User,
+        on_delete=models.PROTECT,
+        related_name='created_tasks',
+        verbose_name='Criador',
+        help_text='Usuário que criou a tarefa (obrigatório, exatamente um).',
+    )
+    responsibles = models.ManyToManyField(
+        User,
+        blank=True,
+        related_name='assigned_tasks',
+        verbose_name='Responsáveis',
+        help_text='Usuários responsáveis pela tarefa (nenhum ou vários).',
     )
 
     class Meta:
