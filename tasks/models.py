@@ -160,7 +160,9 @@ class Task(models.Model):
 
         Descrição:
             Sobrescreve o ``save`` padrão para manter o campo ``closed_at``
-            coerente com o ``status``.
+            coerente com o ``status``. A data de fechamento nunca é definida
+            diretamente pelo cliente: ela é gerida exclusivamente aqui, como
+            efeito colateral da mudança de ``status``.
 
         Objetivo:
             Garantir que ``closed_at`` seja preenchido quando a tarefa entra no
@@ -179,7 +181,8 @@ class Task(models.Model):
         Assertivas de saída:
             - Se ``status == ENTREGUE`` e ``closed_at`` estava vazio, este passa
               a conter o instante atual.
-            - Se ``status != ENTREGUE``, ``closed_at`` fica ``None``.
+            - Se ``status != ENTREGUE``, ``closed_at`` fica ``None`` (cobrindo a
+              reabertura, ou seja, a saída do estágio ENTREGUE).
             - Um ``closed_at`` já preenchido em tarefa ``ENTREGUE`` é mantido
               (a operação é idempotente e não reescreve a data original).
             - Em uma criação com ``creator`` definido e ``creator_name`` vazio,
