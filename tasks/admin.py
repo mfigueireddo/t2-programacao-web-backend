@@ -34,7 +34,10 @@ class TaskAdmin(admin.ModelAdmin):
         Não se aplica.
     """
 
-    list_display = ('id', 'name', 'status', 'story_points', 'created_at', 'due_date')
+    list_display = (
+        'id', 'name', 'status', 'creator', 'creator_name',
+        'story_points', 'created_at', 'due_date',
+    )
     list_filter = ('status',)
-    search_fields = ('name', 'description')
+    search_fields = ('name', 'description', 'creator_name')
     ordering = ('-created_at',)

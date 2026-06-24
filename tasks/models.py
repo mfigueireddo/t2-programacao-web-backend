@@ -29,7 +29,9 @@ class Task(models.Model):
         - ``due_date`` e ``closed_at``, quando informados, são ``datetime``
           válidos (com fuso horário, pois ``USE_TZ`` está ativo).
         - ``creator`` referencia exatamente um :class:`users.models.User`
-          existente (obrigatório).
+          existente na criação (obrigatório); após a criação é imutável e pode
+          tornar-se ``None`` caso a conta do criador seja excluída.
+        - ``creator_name`` reflete o nome do criador (cópia desnormalizada).
         - ``responsibles``, quando informado, referencia zero ou mais
           :class:`users.models.User` existentes.
 
@@ -109,10 +111,26 @@ class Task(models.Model):
     )
     creator = models.ForeignKey(
         User,
-        on_delete=models.PROTECT,
+        null=True,
+        on_delete=models.SET_NULL,
         related_name='created_tasks',
         verbose_name='Criador',
-        help_text='Usuário que criou a tarefa (obrigatório, exatamente um).',
+        help_text=(
+            'Usuário que criou a tarefa. Definido na criação e imutável depois. '
+            'Ao excluir a conta do criador, é anulado (SET_NULL), mas o nome '
+            'permanece preservado em "creator_name".'
+        ),
+    )
+    creator_name = models.CharField(
+        max_length=170,
+        blank=True,
+        verbose_name='Nome do Criador',
+        help_text=(
+            'Nome do criador armazenado de forma desnormalizada (cópia). É '
+            'preenchido na criação, atualizado quando o criador se renomeia e '
+            'passa a "[DELETADO] <último nome>" quando a conta é excluída. '
+            'Permite obter o nome do criador sem consultar a tabela de usuários.'
+        ),
     )
     responsibles = models.ManyToManyField(
         User,
@@ -147,7 +165,8 @@ class Task(models.Model):
         Objetivo:
             Garantir que ``closed_at`` seja preenchido quando a tarefa entra no
             estágio terminal ``ENTREGUE`` e limpo caso a tarefa seja reaberta
-            (mudança para qualquer outro status).
+            (mudança para qualquer outro status). Além disso, na criação, semeia
+            ``creator_name`` com o nome do criador.
 
         Parâmetros:
             self (Task): A instância da tarefa a ser persistida.
@@ -163,6 +182,8 @@ class Task(models.Model):
             - Se ``status != ENTREGUE``, ``closed_at`` fica ``None``.
             - Um ``closed_at`` já preenchido em tarefa ``ENTREGUE`` é mantido
               (a operação é idempotente e não reescreve a data original).
+            - Em uma criação com ``creator`` definido e ``creator_name`` vazio,
+              ``creator_name`` passa a conter o nome do criador.
 
         Retornos:
             None: A instância é persistida no banco como efeito colateral.
@@ -176,6 +197,12 @@ class Task(models.Model):
             # Tarefa não concluída: garante que não exista data de fechamento,
             # cobrindo o caso de reabertura (saída do estágio ENTREGUE).
             self.closed_at = None
+
+        # Na criação, copia o nome do criador para o campo desnormalizado. A
+        # partir daí, a sincronização (renomeação/exclusão) é feita pelos sinais
+        # do app ``users``; aqui apenas semeamos o valor inicial.
+        if self._state.adding and self.creator_id and not self.creator_name:
+            self.creator_name = self.creator.name
 
         super().save(*args, **kwargs)
 
