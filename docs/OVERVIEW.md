@@ -5,12 +5,15 @@ Roteiro de leitura para entender como o projeto está arquitetado e como o fluxo
 ## Visão geral da arquitetura
 
 É um backend **Django + Django REST Framework** que expõe um CRUD de Tarefas (cartões de um quadro Kanban). 
-A estrutura segue o padrão clássico Django, dividida em duas partes:
+A estrutura segue o padrão clássico Django, dividida em três partes:
 
 - **`config/`** — o "projeto" Django: configuração global, roteamento raiz e
   pontos de entrada do servidor (WSGI/ASGI).
 - **`tasks/`** — o "app" Django: todo o domínio de Tarefas (modelo, validação,
   lógica de API, rotas).
+- **`users/`** — o app do domínio de Usuários: por enquanto apenas o modelo
+  `User` (nome e papel), usado como criador e responsáveis de uma tarefa.
+  Ainda **não** expõe endpoints — usuários são criados pelo admin.
 
 O fluxo de uma requisição é: `config/urls.py` → `tasks/urls.py` → `tasks/views.py` → `tasks/serializers.py` ↔ `tasks/models.py` → banco SQLite.
 
@@ -36,7 +39,7 @@ Ponto de entrada de todos os comandos administrativos (`runserver`, `migrate`, e
 
 O "painel de controle". Define apps instalados, middlewares, banco de dados, fuso horário e as configurações de DRF/Swagger/CORS.
 
-**Atente-se:** os apps de terceiros (`rest_framework`, `drf_spectacular`, `corsheaders`) e o app local `tasks`; o banco é SQLite local; `CORS_ALLOW_ALL_ORIGINS = True` e `DEBUG = True` são para desenvolvimento apenas. `USE_TZ` ativo explica por que as datas têm fuso.
+**Atente-se:** os apps de terceiros (`rest_framework`, `drf_spectacular`, `corsheaders`) e os apps locais `users` e `tasks`; o banco é SQLite local; `CORS_ALLOW_ALL_ORIGINS = True` e `DEBUG = True` são para desenvolvimento apenas. `USE_TZ` ativo explica por que as datas têm fuso.
 
 ### 4. [config/urls.py](../config/urls.py)
 
@@ -44,17 +47,17 @@ O roteador raiz — a primeira coisa que recebe qualquer requisição. Distribui
 
 **Atente-se:** a linha `include('tasks.urls')` é o "pulo" para as rotas do app; é o ponto onde o fluxo entra no domínio de Tarefas.
 
-### 5. [tasks/models.py](../tasks/models.py)
+### 5. [users/models.py](../users/models.py) e [tasks/models.py](../tasks/models.py)
 
-O coração do domínio: define a entidade `Task` e seus campos, incluindo o enum de `status` (A_FAZER, EM_PROGRESSO, PRONTO, ENTREGUE).
+O coração do domínio. `users.User` é um modelo simples (nome único + `role`: `ADMINISTRADOR`/`USUARIO`). `tasks.Task` define o cartão do Kanban e seus campos, incluindo o enum de `status` (A_FAZER, EM_PROGRESSO, PRONTO, ENTREGUE).
 
-**Atente-se:** quais campos são preenchidos automaticamente (`created_at`) e quais são opcionais (`due_date`, `closed_at`, `story_points`); a ordenação padrão (mais recentes primeiro). É a base para entender os outros arquivos do app.
+**Atente-se:** os vínculos com usuário — `creator` (FK obrigatória na criação, imutável depois) e `responsibles` (M2M opcional); o campo desnormalizado `creator_name`, mantido em sincronia por **sinais** em [users/signals.py](../users/signals.py) (renomeação e exclusão da conta → `[DELETADO] <nome>`); a lógica de `Task.save()` que preenche `created_at` (automático) e gerencia `closed_at` conforme o status; e a ordenação padrão (mais recentes primeiro).
 
 ### 6. [tasks/serializers.py](../tasks/serializers.py)
 
-A camada de tradução/validação entre JSON e o modelo. Define quais camposentram/saem da  API e regras de validação.
+A camada de tradução/validação entre JSON e o modelo. Define quais campos entram/saem da API e regras de validação.
 
-**Atente-se:** `read_only_fields` (`id`, `created_at` não são aceitos como entrada) e a validação custom de `story_points` (teto de 100).
+**Atente-se:** `read_only_fields` (`id`, `created_at`, `closed_at` e `creator_name` não são aceitos como entrada); `creator` é obrigatório na criação e tornado somente leitura nas atualizações (imutável); a validação de `story_points` (teto de 100) mora no **modelo** (`MaxValueValidator`), não no serializer.
 
 ### 7. [tasks/views.py](../tasks/views.py)
 
@@ -66,12 +69,13 @@ A lógica da API. É enxuto de propósito: usa um `ModelViewSet`, que já entreg
 
 Fecha o ciclo: mapeia cada rota/método HTTP para uma ação específica do `TaskViewSet`.
 
-**Atente-se:** aqui está a tal decisão "não-REST-pura" — em vez de um `DefaultRouter` automático, cada ação do ViewSet é ligada manualmente a uma URL com verbo (`create`, `update/<id>`, `delete/<id>`). É o arquivo que o TODO marca para revisão.
+**Atente-se:** as rotas são geradas por um `DefaultRouter` do DRF, seguindo o padrão REST puro — o recurso é identificado pela URL (`/tasks/`, `/tasks/<id>/`) e a operação vem do verbo HTTP. O router associa automaticamente cada verbo à ação correspondente do ViewSet (`list`, `create`, `retrieve`, `update`, `partial_update`, `destroy`).
 
 ### 9. Complementares (leitura rápida)
 
-- [tasks/admin.py](../tasks/admin.py) — configura a interface administrativa do Django para Tarefas (colunas, filtros, busca). Caminho paralelo à API.
-- [tasks/migrations/0001_initial.py](../tasks/migrations/0001_initial.py) — a tradução do modelo para o esquema do banco; útil para confirmar o que foi efetivamente criado.
+- [tasks/admin.py](../tasks/admin.py) e [users/admin.py](../users/admin.py) — configuram a interface administrativa do Django para Tarefas e Usuários (colunas, filtros, busca). Caminho paralelo à API; é por aqui que se criam usuários hoje.
+- [users/signals.py](../users/signals.py) — sinais que mantêm `Task.creator_name` em sincronia com o usuário (renomeação e exclusão da conta).
+- Migrações em [tasks/migrations/](../tasks/migrations/) e [users/migrations/](../users/migrations/) — a tradução dos modelos para o esquema do banco; úteis para confirmar o que foi efetivamente criado.
 - [config/wsgi.py](../config/wsgi.py) / [config/asgi.py](../config/asgi.py) — pontos de entrada do servidor em produção; pode ignorar no início.
 
 ---

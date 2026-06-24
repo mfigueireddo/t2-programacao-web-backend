@@ -5,7 +5,7 @@ Este documento mostra como **rodar o sistema** no estado atual e como **explorar
 Para o passo a passo de instalação do ambiente, veja o [BUILD.md](./BUILD.md).
 
 > Estado atual: a API expõe apenas o **CRUD de Tarefas**. 
-> Ainda não há autenticação, usuários ou permissões — todas as operações estão liberadas.
+> Já existe um **modelo de usuário** (`users.User`), usado como criador e responsáveis de uma tarefa, mas ainda **não há autenticação nem permissões por papel** — todas as operações estão liberadas. Usuários são criados pelo admin do Django.
 
 ---
 
@@ -62,7 +62,10 @@ Todas as rotas estão sob o prefixo `tasks/`.
 | `story_points` | inteiro | Não | Entre 0 e 100 |
 | `created_at` | datetime | — | Somente leitura (preenchido na criação) |
 | `due_date` | datetime | Não | Formato ISO 8601 (ex.: `2026-07-01T12:00:00Z`) |
-| `closed_at` | datetime | Não | Formato ISO 8601 |
+| `closed_at` | datetime | — | Somente leitura. Preenchido automaticamente ao entrar em `ENTREGUE` e limpo ao sair desse status |
+| `creator` | inteiro | **Sim** (na criação) | `id` de um usuário existente. **Imutável após a criação** (ignorado em `PUT`/`PATCH`) |
+| `creator_name` | string | — | Somente leitura. Cópia do nome do criador; vira `[DELETADO] <nome>` se a conta dele for excluída |
+| `responsibles` | lista de inteiros | Não | `id`s de usuários responsáveis (nenhum ou vários) |
 
 ---
 
@@ -73,6 +76,9 @@ Os exemplos abaixo usam a sintaxe do Bash.
 
 ### 3.1 Criar uma tarefa (`POST /tasks/`)
 
+> `creator` é **obrigatório** e deve ser o `id` de um usuário existente (crie usuários
+> pelo admin em `/admin/`). `responsibles` é opcional.
+
 ```bash
 curl -X POST http://127.0.0.1:8000/tasks/ \
   -H "Content-Type: application/json" \
@@ -81,7 +87,9 @@ curl -X POST http://127.0.0.1:8000/tasks/ \
         "status": "A_FAZER",
         "description": "Login e cadastro de usuários",
         "story_points": 8,
-        "due_date": "2026-07-01T12:00:00Z"
+        "due_date": "2026-07-01T12:00:00Z",
+        "creator": 1,
+        "responsibles": [1, 2]
       }'
 ```
 
@@ -96,7 +104,10 @@ Resposta (`201 Created`):
   "story_points": 8,
   "created_at": "2026-06-23T13:00:00-03:00",
   "due_date": "2026-07-01T09:00:00-03:00",
-  "closed_at": null
+  "closed_at": null,
+  "creator": 1,
+  "creator_name": "Ana",
+  "responsibles": [1, 2]
 }
 ```
 

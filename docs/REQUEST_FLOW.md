@@ -28,8 +28,9 @@ Um mapa de "quem faz o quê" — útil para localizar em que etapa cada coisa ac
 | Roteamento raiz | [config/urls.py](../config/urls.py) | Casa o prefixo `tasks/` e delega para o app; também expõe `admin/`, `schema/`, `swagger/`. |
 | Roteamento do app | [tasks/urls.py](../tasks/urls.py) | Um `DefaultRouter` gera as rotas REST (`/tasks/` e `/tasks/<id>/`) e associa cada método HTTP a uma **ação** do `TaskViewSet` (`list`, `create`, `retrieve`, `update`, `partial_update`, `destroy`). |
 | Controle / orquestração | [tasks/views.py](../tasks/views.py) | `TaskViewSet` (um `ModelViewSet`): recebe a `request`, busca no `queryset`, chama o serializer e monta a `Response`. Nenhum método é escrito à mão. |
-| Validação e (de)serialização | [tasks/serializers.py](../tasks/serializers.py) | Converte JSON ↔ objeto, aplica `read_only_fields` e as validações de campo (`validate_story_points`). **É aqui que mora a maior parte das validações.** |
-| Regras de domínio e schema | [tasks/models.py](../tasks/models.py) | Define os campos, tipos, `choices` de `status`, valores automáticos (`created_at`), opcionais (`due_date`, `closed_at`, `story_points`) e a ordenação padrão. |
+| Validação e (de)serialização | [tasks/serializers.py](../tasks/serializers.py) | Converte JSON ↔ objeto, aplica `read_only_fields` e impõe que `creator` seja obrigatório na criação e imutável depois. **É aqui que mora a maior parte das validações.** |
+| Regras de domínio e schema | [tasks/models.py](../tasks/models.py) e [users/models.py](../users/models.py) | Definem os campos, tipos, `choices` de `status`/`role`, o teto de `story_points` (`MaxValueValidator`), e a lógica de `Task.save()` (preenche `created_at`; gerencia `closed_at` conforme o status; semeia `creator_name`). |
+| Sincronização de criador | [users/signals.py](../users/signals.py) | Sinais `post_save`/`pre_delete` do `User` mantêm `Task.creator_name` coerente (renomeação e exclusão da conta → `[DELETADO] <nome>`). |
 | Persistência | SQLite | Armazena/recupera os registros. |
 
 ### As três camadas onde a validação ocorre
@@ -43,12 +44,12 @@ As rotas de item geradas pelo `DefaultRouter` capturam o `pk` com o padrão `[^/
 2. **Serializer (campo a campo)** — o grosso da validação. 
 
 Ao chamar `serializer.is_valid()`, o DRF aplica:
-- Validações implícitas derivadas do modelo (tipo, `max_length=255` de `name`, pertencimento de `status` ao enum `Status`, `story_points` ≥ 0 por ser `PositiveSmallIntegerField`, obrigatoriedade de `name`);
-- `read_only_fields = ['id', 'created_at']` — esses campos são **ignorados** se vierem no corpo;
-- A validação custom `validate_story_points` — rejeita valores acima de 100.
+- Validações implícitas derivadas do modelo (tipo, `max_length=255` de `name`, pertencimento de `status` ao enum `Status`, `story_points` entre 0 e 100 — `PositiveSmallIntegerField` + `MaxValueValidator`, obrigatoriedade de `name`, existência do usuário em `creator`/`responsibles`);
+- `read_only_fields = ['id', 'created_at', 'closed_at', 'creator_name']` — esses campos são **ignorados** se vierem no corpo;
+- `creator` é obrigatório na criação e, nas atualizações, tornado somente leitura (imutável).
 
 3. **Modelo / banco** — última linha de defesa. 
 
-Restrições de coluna e `auto_now_add` (preenche `created_at`) são aplicadas no `.save()`.
+Restrições de coluna e a lógica de `Task.save()` (preenche `created_at` via `auto_now_add`; ajusta `closed_at` conforme o status; semeia `creator_name`) são aplicadas na persistência.
 
 > Falhas na etapa 1 viram `404`; falhas na etapa 2 viram `400 Bad Request` com o detalhe dos erros por campo, **antes** de qualquer escrita no banco.
