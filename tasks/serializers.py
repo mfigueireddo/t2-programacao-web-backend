@@ -145,10 +145,12 @@ class TaskSerializer(serializers.ModelSerializer):
         """Verifica as alterações permitidas a um usuário comum em uma tarefa.
 
         Descrição:
-            Auxilia :meth:`validate` impondo, para o papel ``USUARIO``, que a
-            única alteração de conteúdo seja o ``status`` e que a lista de
-            responsáveis só possa receber o próprio usuário (sem remover outros
-            nem adicionar terceiros).
+            Auxilia :meth:`validate` impondo, para o papel ``USUARIO``, três
+            restrições na atualização: (1) nenhum campo além de ``status`` e
+            ``responsibles`` pode mudar; (2) a lista de responsáveis só pode
+            receber o próprio usuário (sem remover outros nem adicionar
+            terceiros); e (3) o ``status`` só pode ser alterado se o usuário for
+            responsável pela tarefa.
 
         Parâmetros:
             self (TaskSerializer): A instância do serializer.
@@ -161,12 +163,15 @@ class TaskSerializer(serializers.ModelSerializer):
         Assertivas de saída:
             - Levanta ``serializers.ValidationError`` na primeira violação
               encontrada; não retorna valor em caso de sucesso.
+            - A checagem de responsabilidade do ``status`` considera o estado
+              resultante dos responsáveis: se o usuário se adiciona e altera o
+              status na mesma requisição, a operação é aceita.
 
         Retornos:
             None.
         """
-        # Campos cuja alteração é vedada ao usuário comum. ``status`` é livre e
-        # ``responsibles`` tem tratamento próprio (inclusão do próprio usuário).
+        # Campos cuja alteração é vedada ao usuário comum. ``status`` e
+        # ``responsibles`` têm tratamento próprio mais abaixo.
         for field, value in attrs.items():
             if field in ('status', 'responsibles'):
                 continue
@@ -180,25 +185,39 @@ class TaskSerializer(serializers.ModelSerializer):
                     )
                 })
 
-        if 'responsibles' not in attrs:
-            return
-
+        # Responsáveis: o usuário comum só pode incluir a si mesmo. Apura também
+        # o conjunto resultante (``efetivos``) usado na checagem de status.
         atuais = set(self.instance.responsibles.all())
-        novos = set(attrs['responsibles'])
-        adicionados = novos - atuais
-        removidos = atuais - novos
+        if 'responsibles' in attrs:
+            efetivos = set(attrs['responsibles'])
+            adicionados = efetivos - atuais
+            removidos = atuais - efetivos
 
-        if removidos:
-            raise serializers.ValidationError({
-                'responsibles': 'Usuário comum não pode remover responsáveis.'
-            })
-        if adicionados - {user}:
-            raise serializers.ValidationError({
-                'responsibles': (
-                    'Usuário comum só pode adicionar a si mesmo como '
-                    'responsável.'
-                )
-            })
+            if removidos:
+                raise serializers.ValidationError({
+                    'responsibles':
+                        'Usuário comum não pode remover responsáveis.'
+                })
+            if adicionados - {user}:
+                raise serializers.ValidationError({
+                    'responsibles': (
+                        'Usuário comum só pode adicionar a si mesmo como '
+                        'responsável.'
+                    )
+                })
+        else:
+            efetivos = atuais
+
+        # Status: só pode ser alterado se o usuário for responsável pela tarefa
+        # (considerando uma eventual inclusão de si mesmo na mesma requisição).
+        if 'status' in attrs and attrs['status'] != self.instance.status:
+            if user not in efetivos:
+                raise serializers.ValidationError({
+                    'status': (
+                        'Usuário comum só pode alterar o status de tarefas das '
+                        'quais é responsável.'
+                    )
+                })
 
     def validate_description(self, value):
         """Normaliza ``None`` para string vazia no campo ``description``.
