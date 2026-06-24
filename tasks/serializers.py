@@ -14,8 +14,9 @@ from .models import Task
 @extend_schema_serializer(
     description=(
         "Representação de uma tarefa do quadro Kanban, usada tanto na entrada "
-        "(criação/atualização) quanto na saída da API. Os campos ``id`` e "
-        "``created_at`` são somente leitura."
+        "(criação/atualização) quanto na saída da API. Os campos ``id``, "
+        "``created_at`` e ``closed_at`` são somente leitura (este último é "
+        "preenchido automaticamente conforme o status da tarefa)."
     ),
 )
 class TaskSerializer(serializers.ModelSerializer):
@@ -33,7 +34,8 @@ class TaskSerializer(serializers.ModelSerializer):
         - ``name`` está presente, é string e tem no máximo 255 caracteres.
         - ``status``, quando presente, pertence a :class:`Task.Status`.
         - ``story_points``, quando presente, é inteiro entre 0 e 100.
-        - ``id`` e ``created_at`` não são aceitos como entrada (somente leitura).
+        - ``id``, ``created_at`` e ``closed_at`` não são aceitos como entrada
+          (somente leitura); ``closed_at`` é derivado do ``status``.
 
     Assertivas de saída (ao serializar uma instância):
         - O dicionário resultante contém todos os campos declarados em ``fields``.
@@ -62,4 +64,4 @@ class TaskSerializer(serializers.ModelSerializer):
             'due_date',
             'closed_at',
         ]
-        read_only_fields = ['id', 'created_at']
+        read_only_fields = ['id', 'created_at', 'closed_at']

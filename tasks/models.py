@@ -6,6 +6,7 @@ Kanban.
 
 from django.core.validators import MaxValueValidator
 from django.db import models
+from django.utils import timezone
 
 
 class Task(models.Model):
@@ -115,6 +116,48 @@ class Task(models.Model):
         verbose_name = 'Tarefa'
         verbose_name_plural = 'Tarefas'
         ordering = ['-created_at']
+
+    def save(self, *args, **kwargs):
+        """Persiste a tarefa preenchendo a data de fechamento automaticamente.
+
+        Descrição:
+            Sobrescreve o ``save`` padrão para manter o campo ``closed_at``
+            coerente com o ``status``.
+
+        Objetivo:
+            Garantir que ``closed_at`` seja preenchido quando a tarefa entra no
+            estágio terminal ``ENTREGUE`` e limpo caso a tarefa seja reaberta
+            (mudança para qualquer outro status).
+
+        Parâmetros:
+            self (Task): A instância da tarefa a ser persistida.
+            *args: Argumentos posicionais repassados a ``models.Model.save``.
+            **kwargs: Argumentos nomeados repassados a ``models.Model.save``.
+
+        Assertivas de entrada:
+            - ``self.status`` pertence a :class:`Task.Status`.
+
+        Assertivas de saída:
+            - Se ``status == ENTREGUE`` e ``closed_at`` estava vazio, este passa
+              a conter o instante atual.
+            - Se ``status != ENTREGUE``, ``closed_at`` fica ``None``.
+            - Um ``closed_at`` já preenchido em tarefa ``ENTREGUE`` é mantido
+              (a operação é idempotente e não reescreve a data original).
+
+        Retornos:
+            None: A instância é persistida no banco como efeito colateral.
+        """
+        if self.status == self.Status.ENTREGUE:
+            # Preenche apenas na transição para ENTREGUE, preservando uma data
+            # de fechamento já registrada (idempotência em salvamentos repetidos).
+            if self.closed_at is None:
+                self.closed_at = timezone.now()
+        else:
+            # Tarefa não concluída: garante que não exista data de fechamento,
+            # cobrindo o caso de reabertura (saída do estágio ENTREGUE).
+            self.closed_at = None
+
+        super().save(*args, **kwargs)
 
     def __str__(self):
         """Retorna a representação textual legível da tarefa.
