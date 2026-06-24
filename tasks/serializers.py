@@ -59,6 +59,16 @@ class TaskSerializer(serializers.ModelSerializer):
     # que, por padrão, tornaria o campo opcional no serializer).
     creator = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
 
+    # ``description`` é declarado explicitamente para aceitar ``null`` na entrada,
+    # além de string vazia ou omissão. O modelo usa ``TextField(blank=True)`` sem
+    # ``null=True`` (a convenção do Django é usar apenas string vazia); por isso o
+    # valor ``None`` recebido é normalizado para ``""`` em ``validate_description``.
+    description = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+    )
+
     def __init__(self, *args, **kwargs):
         """Torna ``creator`` somente leitura em atualizações.
 
@@ -78,6 +88,34 @@ class TaskSerializer(serializers.ModelSerializer):
         super().__init__(*args, **kwargs)
         if self.instance is not None:
             self.fields['creator'].read_only = True
+
+    def validate_description(self, value):
+        """Normaliza ``None`` para string vazia no campo ``description``.
+
+        Descrição:
+            O campo aceita ``null`` na entrada (``allow_null=True``), mas o
+            modelo usa ``TextField(blank=True)`` sem ``null=True``. Para evitar
+            gravar ``None`` no banco, converte o valor nulo em string vazia.
+
+        Objetivo:
+            Permitir que o cliente envie ``description: null`` sem erro,
+            preservando a convenção do Django de usar ``""`` como vazio.
+
+        Parâmetros:
+            self (TaskSerializer): A instância do serializer.
+            value (str | None): O valor recebido para ``description``.
+
+        Assertivas de entrada:
+            - ``value`` é ``None`` ou uma string.
+
+        Assertivas de saída:
+            - O valor retornado é sempre uma string (``""`` quando a entrada
+              era ``None``).
+
+        Retornos:
+            str: A descrição normalizada (string vazia no lugar de ``None``).
+        """
+        return value or ''
 
     class Meta:
         """Configuração de mapeamento entre o serializer e o modelo ``Task``.
