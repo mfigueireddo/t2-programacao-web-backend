@@ -3,12 +3,16 @@
 Expõe a consulta de um usuário por ``id`` para que o frontend descubra seu papel
 (permissão). Enquanto não há autenticação por token, esta é a forma de o cliente
 saber quais ações deve habilitar na interface para o usuário informado.
+
+Expõe também a listagem de todos os usuários do sistema, restrita a
+administradores autenticados.
 """
 
 from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import generics, permissions
 
 from .models import User
+from .permissions import IsAdministrador
 from .serializers import UserSerializer
 
 
@@ -56,3 +60,49 @@ class UserRetrieveView(generics.RetrieveAPIView):
     # precisa dela justamente para decidir o que exibir antes de qualquer ação
     # protegida.
     permission_classes = [permissions.AllowAny]
+
+
+@extend_schema_view(
+    get=extend_schema(
+        summary="Lista todos os usuários do sistema",
+        description=(
+            "Retorna a coleção completa de usuários cadastrados, incluindo o "
+            "papel (``role``) e o rótulo legível (``role_display``) de cada um. "
+            "Acesso restrito: apenas usuários autenticados com papel "
+            "``ADMINISTRADOR`` podem consultar. Responde ``401 Unauthorized`` "
+            "para acesso anônimo e ``403 Forbidden`` para usuários sem o papel "
+            "de administrador."
+        ),
+    ),
+)
+class UserListView(generics.ListAPIView):
+    """Endpoint REST para listar todos os usuários do sistema.
+
+    Descrição:
+        Disponibiliza a operação de listagem de usuários, devolvendo a coleção
+        completa de cadastros. O acesso é exclusivo de administradores
+        autenticados.
+
+    Objetivo:
+        Atender ``GET /users/``, permitindo que um administrador obtenha todos
+        os usuários do sistema (com seus papéis).
+
+    Assertivas de entrada:
+        - ``request.user`` está autenticado e possui ``role == ADMINISTRADOR``;
+          caso contrário, responde ``401 Unauthorized`` (anônimo) ou
+          ``403 Forbidden`` (papel insuficiente).
+
+    Assertivas de saída:
+        - Em caso de sucesso, retorna ``200 OK`` com a lista de usuários
+          (``id``, ``name``, ``role`` e ``role_display`` de cada um).
+
+    Retornos:
+        rest_framework.response.Response: Resposta HTTP com a lista de usuários
+        (gerada pelo método herdado de ``ListAPIView``).
+    """
+
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    # Listagem completa é uma operação administrativa: exige usuário
+    # autenticado com papel ADMINISTRADOR.
+    permission_classes = [IsAdministrador]
