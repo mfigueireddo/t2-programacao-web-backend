@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
 from pathlib import Path
+from corsheaders.defaults import default_headers
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -132,6 +133,11 @@ SPECTACULAR_SETTINGS = {
 # Em desenvolvimento, liberamos todas as origens para facilitar o consumo pelo
 # frontend hospedado em outro domínio. Em produção, restringir via CORS_ALLOWED_ORIGINS.
 CORS_ALLOW_ALL_ORIGINS = True
+
+CORS_ALLOW_HEADERS = [
+    *default_headers,
+    "x-user-id",
+]
 
 # Internationalization
 # https://docs.djangoproject.com/en/6.0/topics/i18n/

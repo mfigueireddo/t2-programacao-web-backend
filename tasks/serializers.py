@@ -115,8 +115,8 @@ class TaskSerializer(serializers.ModelSerializer):
         Assertivas de saída:
             - Para ``USUARIO`` em atualização, levanta ``ValidationError`` se
               algum campo diferente de ``status``/``responsibles`` for alterado,
-              se responsáveis forem removidos, ou se for adicionado um
-              responsável diferente do próprio usuário.
+              ou se for adicionado/removido um responsável diferente do próprio
+              usuário.
             - Nos demais casos, retorna ``attrs`` inalterado.
 
         Retornos:
@@ -147,8 +147,8 @@ class TaskSerializer(serializers.ModelSerializer):
         Descrição:
             Auxilia :meth:`validate` impondo, para o papel ``USUARIO``, três
             restrições na atualização: (1) nenhum campo além de ``status`` e
-            ``responsibles`` pode mudar; (2) a lista de responsáveis só pode
-            receber o próprio usuário (sem remover outros nem adicionar
+            ``responsibles`` pode mudar; (2) na lista de responsáveis o usuário
+            só pode incluir ou remover a si mesmo (sem adicionar nem remover
             terceiros); e (3) o ``status`` só pode ser alterado se o usuário for
             responsável pela tarefa.
 
@@ -185,18 +185,20 @@ class TaskSerializer(serializers.ModelSerializer):
                     )
                 })
 
-        # Responsáveis: o usuário comum só pode incluir a si mesmo. Apura também
-        # o conjunto resultante (``efetivos``) usado na checagem de status.
+        # Responsáveis: o usuário comum só pode incluir ou remover a si mesmo.
+        # Apura também o conjunto resultante (``efetivos``) usado na checagem de
+        # status.
         atuais = set(self.instance.responsibles.all())
         if 'responsibles' in attrs:
             efetivos = set(attrs['responsibles'])
             adicionados = efetivos - atuais
             removidos = atuais - efetivos
 
-            if removidos:
+            if removidos - {user}:
                 raise serializers.ValidationError({
                     'responsibles':
-                        'Usuário comum não pode remover responsáveis.'
+                        'Usuário comum só pode remover a si mesmo da lista de '
+                        'responsáveis.'
                 })
             if adicionados - {user}:
                 raise serializers.ValidationError({
