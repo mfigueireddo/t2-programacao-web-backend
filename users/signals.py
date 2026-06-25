@@ -7,9 +7,8 @@ São tratados dois eventos do ciclo de vida do :class:`users.models.User`:
 - **Renomeação** (``post_save``): o nome salvo em cada tarefa criada pelo
   usuário é atualizado para o novo nome.
 - **Exclusão da conta** (``pre_delete``): o nome salvo passa a seguir o formato
-  ``[DELETADO] <último nome>``. Em seguida, o próprio Django anula a FK
-  ``creator`` (``on_delete=SET_NULL``) e remove o usuário da relação
-  ``responsibles`` (limpeza automática da tabela M2M).
+  ``[DELETADO] <último nome>``. Em seguida, o próprio Django anula as FKs
+  ``creator`` e ``responsible`` (ambas ``on_delete=SET_NULL``).
 
 Opta-se por sinais — e não apenas por sobrescrever ``save``/``delete`` no
 modelo — porque ``pre_delete`` é disparado para cada objeto também em exclusões
@@ -76,8 +75,8 @@ def mark_creator_name_on_delete(sender, instance, **kwargs):
 
     Objetivo:
         Cumprir a regra de negócio de manter, na tarefa, o registro de quem a
-        criou mesmo após a exclusão da conta. A anulação da FK ``creator`` e a
-        remoção das relações de responsável são tratadas pelo próprio Django.
+        criou mesmo após a exclusão da conta. A anulação das FKs ``creator`` e
+        ``responsible`` é tratada pelo próprio Django.
 
     Parâmetros:
         sender (type): A classe que emitiu o sinal (``User``).

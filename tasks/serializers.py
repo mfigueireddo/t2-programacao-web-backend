@@ -41,8 +41,8 @@ class TaskSerializer(serializers.ModelSerializer):
         - ``creator`` está presente e referencia o ``id`` de um usuário
           existente na criação (obrigatório); em atualizações é ignorado, pois
           o criador é imutável após a criação.
-        - ``responsibles``, quando presente, é uma lista de ``id`` de usuários
-          existentes (pode ser vazia ou omitida).
+        - ``responsible``, quando presente, é o ``id`` de um usuário existente
+          ou ``null`` (a tarefa tem no máximo um responsável, ou nenhum).
         - ``id``, ``created_at``, ``closed_at`` e ``creator_name`` não são
           aceitos como entrada (somente leitura); ``closed_at`` é derivado do
           ``status`` e ``creator_name`` é gerido a partir do criador.
@@ -94,9 +94,9 @@ class TaskSerializer(serializers.ModelSerializer):
 
         Descrição:
             Em atualizações feitas por um usuário de papel ``USUARIO``, restringe
-            o que pode ser alterado: somente o ``status`` da tarefa e a inclusão
-            do próprio usuário na lista de responsáveis. Administradores e
-            criações não sofrem qualquer restrição aqui.
+            o que pode ser alterado: somente o ``status`` da tarefa e a atribuição
+            do próprio usuário como responsável (ou a remoção de si mesmo).
+            Administradores e criações não sofrem qualquer restrição aqui.
 
         Objetivo:
             Cumprir, no nível dos campos, as regras de autorização que a
@@ -114,8 +114,8 @@ class TaskSerializer(serializers.ModelSerializer):
 
         Assertivas de saída:
             - Para ``USUARIO`` em atualização, levanta ``ValidationError`` se
-              algum campo diferente de ``status``/``responsibles`` for alterado,
-              ou se for adicionado/removido um responsável diferente do próprio
+              algum campo diferente de ``status``/``responsible`` for alterado,
+              ou se o responsável for definido como alguém diferente do próprio
               usuário.
             - Nos demais casos, retorna ``attrs`` inalterado.
 
@@ -147,9 +147,10 @@ class TaskSerializer(serializers.ModelSerializer):
         Descrição:
             Auxilia :meth:`validate` impondo, para o papel ``USUARIO``, três
             restrições na atualização: (1) nenhum campo além de ``status`` e
-            ``responsibles`` pode mudar; (2) na lista de responsáveis o usuário
-            só pode incluir ou remover a si mesmo (sem adicionar nem remover
-            terceiros); e (3) o ``status`` só pode ser alterado se o usuário for
+            ``responsible`` pode mudar; (2) o usuário só pode atribuir-se como
+            responsável quando a tarefa não tem nenhum, e só pode remover-se
+            quando é o responsável atual (nunca atribuir nem remover terceiros);
+            e (3) o ``status`` só pode ser alterado se o usuário for o
             responsável pela tarefa.
 
         Parâmetros:
@@ -164,16 +165,16 @@ class TaskSerializer(serializers.ModelSerializer):
             - Levanta ``serializers.ValidationError`` na primeira violação
               encontrada; não retorna valor em caso de sucesso.
             - A checagem de responsabilidade do ``status`` considera o estado
-              resultante dos responsáveis: se o usuário se adiciona e altera o
+              resultante do responsável: se o usuário se atribui e altera o
               status na mesma requisição, a operação é aceita.
 
         Retornos:
             None.
         """
         # Campos cuja alteração é vedada ao usuário comum. ``status`` e
-        # ``responsibles`` têm tratamento próprio mais abaixo.
+        # ``responsible`` têm tratamento próprio mais abaixo.
         for field, value in attrs.items():
-            if field in ('status', 'responsibles'):
+            if field in ('status', 'responsible'):
                 continue
             # Só é violação se o valor enviado de fato difere do atual (um PUT
             # reenvia campos inalterados, que não devem ser considerados edição).
@@ -181,39 +182,52 @@ class TaskSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError({
                     field: (
                         'Usuário comum só pode alterar o status da tarefa ou '
-                        'adicionar a si mesmo como responsável.'
+                        'atribuir/remover a si mesmo como responsável.'
                     )
                 })
 
-        # Responsáveis: o usuário comum só pode incluir ou remover a si mesmo.
-        # Apura também o conjunto resultante (``efetivos``) usado na checagem de
-        # status.
-        atuais = set(self.instance.responsibles.all())
-        if 'responsibles' in attrs:
-            efetivos = set(attrs['responsibles'])
-            adicionados = efetivos - atuais
-            removidos = atuais - efetivos
-
-            if removidos - {user}:
-                raise serializers.ValidationError({
-                    'responsibles':
-                        'Usuário comum só pode remover a si mesmo da lista de '
-                        'responsáveis.'
-                })
-            if adicionados - {user}:
-                raise serializers.ValidationError({
-                    'responsibles': (
-                        'Usuário comum só pode adicionar a si mesmo como '
-                        'responsável.'
-                    )
-                })
+        # Responsável: o usuário comum só pode atribuir-se quando a tarefa não
+        # tem responsável, ou remover-se quando é o responsável atual. Apura
+        # também o estado resultante (``efetivo``) usado na checagem de status.
+        atual = self.instance.responsible
+        if 'responsible' in attrs:
+            novo = attrs['responsible']
+            if novo != atual:
+                if novo == user:
+                    # Atribuir-se: só é permitido quando não há responsável.
+                    if atual is not None:
+                        raise serializers.ValidationError({
+                            'responsible': (
+                                'Usuário comum só pode atribuir-se como '
+                                'responsável quando a tarefa não possui '
+                                'nenhum responsável.'
+                            )
+                        })
+                elif novo is None:
+                    # Remover o responsável: só é permitido se for a si mesmo.
+                    if atual != user:
+                        raise serializers.ValidationError({
+                            'responsible': (
+                                'Usuário comum só pode remover a si mesmo da '
+                                'responsabilidade da tarefa.'
+                            )
+                        })
+                else:
+                    # Atribuir a um terceiro é sempre vedado ao usuário comum.
+                    raise serializers.ValidationError({
+                        'responsible': (
+                            'Usuário comum só pode atribuir a si mesmo como '
+                            'responsável.'
+                        )
+                    })
+            efetivo = novo
         else:
-            efetivos = atuais
+            efetivo = atual
 
-        # Status: só pode ser alterado se o usuário for responsável pela tarefa
-        # (considerando uma eventual inclusão de si mesmo na mesma requisição).
+        # Status: só pode ser alterado se o usuário for o responsável pela tarefa
+        # (considerando uma eventual atribuição de si mesmo na mesma requisição).
         if 'status' in attrs and attrs['status'] != self.instance.status:
-            if user not in efetivos:
+            if efetivo != user:
                 raise serializers.ValidationError({
                     'status': (
                         'Usuário comum só pode alterar o status de tarefas das '
@@ -272,6 +286,6 @@ class TaskSerializer(serializers.ModelSerializer):
             'closed_at',
             'creator',
             'creator_name',
-            'responsibles',
+            'responsible',
         ]
         read_only_fields = ['id', 'created_at', 'closed_at', 'creator_name']

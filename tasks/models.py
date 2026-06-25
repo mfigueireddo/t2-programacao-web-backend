@@ -32,8 +32,9 @@ class Task(models.Model):
           existente na criação (obrigatório); após a criação é imutável e pode
           tornar-se ``None`` caso a conta do criador seja excluída.
         - ``creator_name`` reflete o nome do criador (cópia desnormalizada).
-        - ``responsibles``, quando informado, referencia zero ou mais
-          :class:`users.models.User` existentes.
+        - ``responsible``, quando informado, referencia exatamente um
+          :class:`users.models.User` existente (ou ``None``, quando a tarefa
+          não possui responsável).
 
     Assertivas de saída:
         - A instância possui ``id`` inteiro positivo e único.
@@ -132,12 +133,17 @@ class Task(models.Model):
             'Permite obter o nome do criador sem consultar a tabela de usuários.'
         ),
     )
-    responsibles = models.ManyToManyField(
+    responsible = models.ForeignKey(
         User,
+        null=True,
         blank=True,
+        on_delete=models.SET_NULL,
         related_name='assigned_tasks',
-        verbose_name='Responsáveis',
-        help_text='Usuários responsáveis pela tarefa (nenhum ou vários).',
+        verbose_name='Responsável',
+        help_text=(
+            'Usuário responsável pela tarefa (no máximo um; pode não haver '
+            'nenhum). Ao excluir a conta do responsável, é anulado (SET_NULL).'
+        ),
     )
 
     class Meta:

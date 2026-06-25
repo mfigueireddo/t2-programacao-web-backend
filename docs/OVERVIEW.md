@@ -12,7 +12,7 @@ A estrutura segue o padrão clássico Django, dividida em três partes:
 - **`tasks/`** — o "app" Django: todo o domínio de Tarefas (modelo, validação,
   lógica de API, rotas).
 - **`users/`** — o app do domínio de Usuários: por enquanto apenas o modelo
-  `User` (nome e papel), usado como criador e responsáveis de uma tarefa.
+  `User` (nome e papel), usado como criador e responsável de uma tarefa.
   Ainda **não** expõe endpoints — usuários são criados pelo admin.
 
 O fluxo de uma requisição é: `config/urls.py` → `tasks/urls.py` → `tasks/views.py` → `tasks/serializers.py` ↔ `tasks/models.py` → banco SQLite.
@@ -51,7 +51,7 @@ O roteador raiz — a primeira coisa que recebe qualquer requisição. Distribui
 
 O coração do domínio. `users.User` é um modelo simples (nome único + `role`: `ADMINISTRADOR`/`USUARIO`). `tasks.Task` define o cartão do Kanban e seus campos, incluindo o enum de `status` (A_FAZER, EM_PROGRESSO, PRONTO, ENTREGUE).
 
-**Atente-se:** os vínculos com usuário — `creator` (FK obrigatória na criação, imutável depois) e `responsibles` (M2M opcional); o campo desnormalizado `creator_name`, mantido em sincronia por **sinais** em [users/signals.py](../users/signals.py) (renomeação e exclusão da conta → `[DELETADO] <nome>`); a lógica de `Task.save()` que preenche `created_at` (automático) e gerencia `closed_at` conforme o status; e a ordenação padrão (mais recentes primeiro).
+**Atente-se:** os vínculos com usuário — `creator` (FK obrigatória na criação, imutável depois) e `responsible` (FK opcional, no máximo um); o campo desnormalizado `creator_name`, mantido em sincronia por **sinais** em [users/signals.py](../users/signals.py) (renomeação e exclusão da conta → `[DELETADO] <nome>`); a lógica de `Task.save()` que preenche `created_at` (automático) e gerencia `closed_at` conforme o status; e a ordenação padrão (mais recentes primeiro).
 
 ### 6. [tasks/serializers.py](../tasks/serializers.py)
 

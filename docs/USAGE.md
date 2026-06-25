@@ -65,7 +65,7 @@ Todas as rotas estão sob o prefixo `tasks/`.
 | `closed_at` | datetime | — | Somente leitura. Preenchido automaticamente ao entrar em `ENTREGUE` e limpo ao sair desse status |
 | `creator` | inteiro | **Sim** (na criação) | `id` de um usuário existente. **Imutável após a criação** (ignorado em `PUT`/`PATCH`) |
 | `creator_name` | string | — | Somente leitura. Cópia do nome do criador; vira `[DELETADO] <nome>` se a conta dele for excluída |
-| `responsibles` | lista de inteiros | Não | `id`s de usuários responsáveis (nenhum ou vários) |
+| `responsible` | inteiro \| `null` | Não | `id` do usuário responsável (no máximo um) ou `null` |
 
 ---
 
@@ -77,7 +77,7 @@ Os exemplos abaixo usam a sintaxe do Bash.
 ### 3.1 Criar uma tarefa (`POST /tasks/`)
 
 > `creator` é **obrigatório** e deve ser o `id` de um usuário existente (crie usuários
-> pelo admin em `/admin/`). `responsibles` é opcional.
+> pelo admin em `/admin/`). `responsible` é opcional.
 
 ```bash
 curl -X POST http://127.0.0.1:8000/tasks/ \
@@ -89,7 +89,7 @@ curl -X POST http://127.0.0.1:8000/tasks/ \
         "story_points": 8,
         "due_date": "2026-07-01T12:00:00Z",
         "creator": 1,
-        "responsibles": [1, 2]
+        "responsible": 2
       }'
 ```
 
@@ -107,7 +107,7 @@ Resposta (`201 Created`):
   "closed_at": null,
   "creator": 1,
   "creator_name": "Ana",
-  "responsibles": [1, 2]
+  "responsible": 2
 }
 ```
 

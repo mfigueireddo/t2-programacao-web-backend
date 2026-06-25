@@ -10,8 +10,9 @@ Regras de endpoint (decididas aqui):
     - Editar (``update``/``partial_update``): ``ADMINISTRADOR`` ou ``USUARIO``.
 
 A edição por ``USUARIO`` é liberada *no nível do endpoint*, mas é restrita *no
-nível dos campos* (só ``status`` e adicionar a si mesmo como responsável). Essa
-parte, por depender do conteúdo enviado, é validada no serializer
+nível dos campos* (só ``status`` e atribuir/remover a si mesmo como
+responsável). Essa parte, por depender do conteúdo enviado, é validada no
+serializer
 (:class:`tasks.serializers.TaskSerializer`), não aqui.
 """
 

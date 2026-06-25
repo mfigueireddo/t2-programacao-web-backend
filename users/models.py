@@ -20,8 +20,8 @@ class User(models.Model):
 
     Objetivo:
         Fornecer a identidade necessária para os vínculos de criador
-        (:attr:`tasks.models.Task.creator`) e de responsáveis
-        (:attr:`tasks.models.Task.responsibles`).
+        (:attr:`tasks.models.Task.creator`) e de responsável
+        (:attr:`tasks.models.Task.responsible`).
 
     Assertivas de entrada:
         - ``name`` é uma string não vazia, única no sistema, com no máximo 150

@@ -44,7 +44,7 @@ As rotas de item geradas pelo `DefaultRouter` capturam o `pk` com o padrão `[^/
 2. **Serializer (campo a campo)** — o grosso da validação. 
 
 Ao chamar `serializer.is_valid()`, o DRF aplica:
-- Validações implícitas derivadas do modelo (tipo, `max_length=255` de `name`, pertencimento de `status` ao enum `Status`, `story_points` entre 0 e 100 — `PositiveSmallIntegerField` + `MaxValueValidator`, obrigatoriedade de `name`, existência do usuário em `creator`/`responsibles`);
+- Validações implícitas derivadas do modelo (tipo, `max_length=255` de `name`, pertencimento de `status` ao enum `Status`, `story_points` entre 0 e 100 — `PositiveSmallIntegerField` + `MaxValueValidator`, obrigatoriedade de `name`, existência do usuário em `creator`/`responsible`);
 - `read_only_fields = ['id', 'created_at', 'closed_at', 'creator_name']` — esses campos são **ignorados** se vierem no corpo;
 - `creator` é obrigatório na criação e, nas atualizações, tornado somente leitura (imutável).
 
