@@ -247,3 +247,5 @@ Dado o que foi proposto, tudo foi testado e funciona. A única limitação a se 
 ![Schemas](images/schemas.png)
 
 ![Admin](images/admin.png)
+
+![Token de recuperação de senha](images/token-senha.png)
