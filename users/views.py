@@ -141,10 +141,10 @@ class ChangePasswordView(APIView):
 
 @extend_schema(request=ForgotPasswordSerializer)
 class ForgotPasswordView(APIView):
-    """Gera token para recuperação de senha.
+    """Gera token para recuperação de senha e envia pelo console.
 
-    Para simplificar o trabalho, o token é retornado na resposta.
-    Em um sistema real, ele seria enviado por email.
+    Para simplificar o trabalho, o email é enviado usando o console backend
+    do Django. Assim, a mensagem aparece no terminal do backend.
     """
 
     permission_classes = [permissions.AllowAny]
@@ -153,12 +153,14 @@ class ForgotPasswordView(APIView):
         serializer = ForgotPasswordSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        reset_token = serializer.save()
+        serializer.save()
 
         return Response(
             {
-                'detail': 'Token de recuperação gerado com sucesso.',
-                'reset_token': reset_token.token,
+                'detail': (
+                    'Email de recuperação enviado. '
+                    'Verifique o terminal do backend para copiar o token.'
+                )
             }
         )
 

@@ -36,6 +36,15 @@ class User(models.Model):
         help_text='Nome do usuário (único no sistema).',
     )
 
+    email = models.EmailField(
+        max_length=254,
+        unique=True,
+        null=True,
+        blank=True,
+        verbose_name='Email',
+        help_text='Email do usuário, usado para recuperação de senha.',
+    )
+
     password = models.CharField(
         max_length=128,
         verbose_name='Senha',
