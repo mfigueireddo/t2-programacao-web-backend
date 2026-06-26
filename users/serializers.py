@@ -18,6 +18,7 @@ Tanto a troca quanto a redefinição de senha invalidam os tokens de autenticaç
 existentes do usuário.
 """
 
+from django.core.mail import send_mail
 from rest_framework import serializers
 from .models import AuthToken, PasswordResetToken, User
 
@@ -26,16 +27,17 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['id', 'name', 'role', 'role_display', 'created_at']
+        fields = ['id', 'name', 'email', 'role', 'role_display', 'created_at']
         read_only_fields = ['id', 'role_display', 'created_at']
 
 
 class SignupSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, min_length=8)
+    email = serializers.EmailField(required=True)
 
     class Meta:
         model = User
-        fields = ['id', 'name', 'password', 'role']
+        fields = ['id', 'name', 'email', 'password', 'role']
         read_only_fields = ['id']
 
     def validate_name(self, value):
@@ -46,6 +48,17 @@ class SignupSerializer(serializers.ModelSerializer):
 
         if User.objects.filter(name__iexact=value).exists():
             raise serializers.ValidationError('Já existe um usuário com esse nome.')
+
+        return value
+
+    def validate_email(self, value):
+        value = value.strip().lower()
+
+        if not value:
+            raise serializers.ValidationError('O email é obrigatório.')
+
+        if User.objects.filter(email__iexact=value).exists():
+            raise serializers.ValidationError('Já existe um usuário com esse email.')
 
         return value
 
@@ -107,17 +120,35 @@ class ChangePasswordSerializer(serializers.Serializer):
 
 
 class ForgotPasswordSerializer(serializers.Serializer):
-    name = serializers.CharField()
+    email = serializers.EmailField()
 
-    def validate_name(self, value):
+    def validate_email(self, value):
+        email = value.strip().lower()
+
         try:
-            return User.objects.get(name=value.strip())
+            return User.objects.get(email__iexact=email)
         except User.DoesNotExist:
-            raise serializers.ValidationError('Usuário não encontrado.')
+            raise serializers.ValidationError('Usuário não encontrado para este email.')
 
     def save(self):
-        user = self.validated_data['name']
-        return PasswordResetToken.create_for_user(user)
+        user = self.validated_data['email']
+        reset_token = PasswordResetToken.create_for_user(user)
+
+        send_mail(
+            subject='Recuperação de senha - Quadro Kanban',
+            message=(
+                f'Olá, {user.name}!\n\n'
+                f'Você solicitou a recuperação de senha do Quadro Kanban.\n\n'
+                f'Use o token abaixo para redefinir sua senha:\n\n'
+                f'{reset_token.token}\n\n'
+                f'Este token expira em 1 hora.\n'
+            ),
+            from_email=None,
+            recipient_list=[user.email],
+            fail_silently=False,
+        )
+
+        return reset_token
 
 
 class ResetPasswordSerializer(serializers.Serializer):
