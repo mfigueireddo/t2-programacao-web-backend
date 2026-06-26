@@ -1,4 +1,5 @@
-"""Modelos de dados do domínio de Tarefas (Tasks).
+"""
+Modelos de dados do domínio de Tarefas (Tasks).
 
 Este módulo define a entidade ``Task``, que representa um cartão do quadro
 Kanban.
@@ -7,12 +8,11 @@ Kanban.
 from django.core.validators import MaxValueValidator
 from django.db import models
 from django.utils import timezone
-
 from users.models import User
 
-
 class Task(models.Model):
-    """Representa uma tarefa (cartão) do quadro Kanban.
+    """
+    Representa uma tarefa (cartão) do quadro Kanban.
 
     Descrição:
         Entidade persistida em banco que armazena as informações de uma tarefa,
@@ -43,7 +43,8 @@ class Task(models.Model):
     """
 
     class Status(models.TextChoices):
-        """Enumeração dos estágios possíveis de uma tarefa no quadro.
+        """
+        Enumeração dos estágios possíveis de uma tarefa no quadro.
 
         Descrição:
             Conjunto fechado de valores que o campo ``status`` pode assumir.
@@ -147,7 +148,8 @@ class Task(models.Model):
     )
 
     class Meta:
-        """Metadados de configuração do modelo ``Task``.
+        """
+        Metadados de configuração do modelo ``Task``.
 
         Descrição:
             Define ordenação padrão e rótulos legíveis do modelo.
@@ -162,7 +164,8 @@ class Task(models.Model):
         ordering = ['-created_at']
 
     def save(self, *args, **kwargs):
-        """Persiste a tarefa preenchendo a data de fechamento automaticamente.
+        """
+        Persiste a tarefa preenchendo a data de fechamento automaticamente.
 
         Descrição:
             Sobrescreve o ``save`` padrão para manter o campo ``closed_at``
@@ -193,9 +196,6 @@ class Task(models.Model):
               (a operação é idempotente e não reescreve a data original).
             - Em uma criação com ``creator`` definido e ``creator_name`` vazio,
               ``creator_name`` passa a conter o nome do criador.
-
-        Retornos:
-            None: A instância é persistida no banco como efeito colateral.
         """
         if self.status == self.Status.ENTREGUE:
             # Preenche apenas na transição para ENTREGUE, preservando uma data
@@ -216,7 +216,8 @@ class Task(models.Model):
         super().save(*args, **kwargs)
 
     def __str__(self):
-        """Retorna a representação textual legível da tarefa.
+        """
+        Retorna a representação textual legível da tarefa.
 
         Descrição:
             Fornece um rótulo curto e humano para a instância, usado pelo admin,

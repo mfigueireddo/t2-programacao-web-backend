@@ -1,4 +1,5 @@
-"""Permissões (autorização por papel) do domínio de Tarefas.
+"""
+Permissões (autorização por papel) do domínio de Tarefas.
 
 Define quem pode executar cada ação sobre tarefas, com base no papel
 (:class:`users.models.User.Role`) do usuário identificado em ``request.user``.
@@ -16,12 +17,8 @@ serializer
 (:class:`tasks.serializers.TaskSerializer`), não aqui.
 """
 
-"""Permissões de tarefas."""
-
 from rest_framework import permissions
-
 from users.models import User
-
 
 class TaskPermission(permissions.BasePermission):
     """Autoriza ações sobre tarefas conforme o papel do usuário logado."""

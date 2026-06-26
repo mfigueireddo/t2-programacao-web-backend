@@ -1,18 +1,15 @@
-"""Views (camada de API) do domínio de Tarefas (Tasks).
+"""
+Views (camada de API) do domínio de Tarefas (Tasks).
 
 Expõe o CRUD do modelo :class:`tasks.models.Task` por meio de um ``ViewSet`` do
 Django REST Framework.
 """
 
-"""Views do domínio de Tarefas."""
-
 from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import viewsets
-
 from .models import Task
 from .permissions import TaskPermission
 from .serializers import TaskSerializer
-
 
 @extend_schema_view(
     list=extend_schema(

@@ -1,4 +1,5 @@
-"""Roteamento de URLs do domínio de Tarefas (Tasks).
+"""
+Roteamento de URLs do domínio de Tarefas (Tasks).
 
 Mapeia os caminhos do app (já montados sob o prefixo ``tasks/`` pela URLconf
 raiz) para as ações do :class:`tasks.views.TaskViewSet`. O esquema segue o

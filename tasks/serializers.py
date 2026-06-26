@@ -1,18 +1,14 @@
-"""Serializers do domínio de Tarefas (Tasks).
+"""
+Serializers do domínio de Tarefas (Tasks).
 
 Define a tradução entre instâncias do modelo :class:`tasks.models.Task` e a
 representação JSON consumida/produzida pela API REST, além de validar os dados
 de entrada antes da persistência.
 """
 
-"""Serializers do domínio de Tarefas."""
-
 from rest_framework import serializers
-
 from users.models import User
-
 from .models import Task
-
 
 class TaskSerializer(serializers.ModelSerializer):
     creator = serializers.PrimaryKeyRelatedField(read_only=True)
