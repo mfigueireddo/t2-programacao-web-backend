@@ -20,8 +20,14 @@ de usuários:
   administrador.
 """
 
-from drf_spectacular.utils import extend_schema, extend_schema_view
-from rest_framework import permissions, status, viewsets
+from drf_spectacular.utils import (
+    OpenApiExample,
+    OpenApiResponse,
+    extend_schema,
+    extend_schema_view,
+    inline_serializer,
+)
+from rest_framework import permissions, serializers, status, viewsets
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -38,7 +44,39 @@ from .serializers import (
 )
 
 
-@extend_schema(request=SignupSerializer, responses=LoginResponseSerializer)
+def _detail_response(description):
+    """Resposta de schema com um único campo ``detail`` (mensagem de texto)."""
+    return OpenApiResponse(
+        response=inline_serializer(
+            name=f'Detail{description.replace(" ", "")}',
+            fields={'detail': serializers.CharField()},
+        ),
+        description=description,
+    )
+
+
+@extend_schema(
+    summary='Cadastra um usuário',
+    description=(
+        'Cria uma conta e já devolve um token de acesso. "name" e "email" devem '
+        'ser únicos e a senha precisa ter no mínimo 8 caracteres. O campo "role" é '
+        'opcional (padrão USUARIO).'
+    ),
+    request=SignupSerializer,
+    responses=LoginResponseSerializer,
+    examples=[
+        OpenApiExample(
+            'Cadastro de usuário',
+            value={
+                'name': 'maria',
+                'email': 'maria@exemplo.com',
+                'password': 'senha-segura-123',
+                'role': 'ADMINISTRADOR',
+            },
+            request_only=True,
+        ),
+    ],
+)
 class SignupView(APIView):
     """Cria uma conta e já retorna token de acesso."""
 
@@ -60,7 +98,19 @@ class SignupView(APIView):
         )
 
 
-@extend_schema(request=LoginSerializer, responses=LoginResponseSerializer)
+@extend_schema(
+    summary='Autentica um usuário',
+    description='Autentica por nome e senha, retornando um token de acesso e os dados do usuário.',
+    request=LoginSerializer,
+    responses=LoginResponseSerializer,
+    examples=[
+        OpenApiExample(
+            'Login',
+            value={'name': 'maria', 'password': 'senha-segura-123'},
+            request_only=True,
+        ),
+    ],
+)
 class LoginView(APIView):
     """Autentica usuário por nome e senha."""
 
@@ -81,6 +131,15 @@ class LoginView(APIView):
         )
 
 
+@extend_schema(
+    summary='Encerra a sessão',
+    description=(
+        'Remove o token usado na requisição atual, invalidando-o. Requer estar '
+        'autenticado (envie o token no cabeçalho Authorization).'
+    ),
+    request=None,
+    responses={204: OpenApiResponse(description='Logout efetuado.')},
+)
 class LogoutView(APIView):
     """Remove o token usado na requisição atual."""
 
@@ -93,6 +152,38 @@ class LogoutView(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
+@extend_schema_view(
+    get=extend_schema(
+        summary='Consulta a própria conta',
+        description='Retorna os dados do usuário autenticado.',
+        responses=UserSerializer,
+    ),
+    patch=extend_schema(
+        summary='Atualiza a própria conta',
+        description=(
+            'Atualiza parcialmente os dados do usuário autenticado. Apenas '
+            'administradores podem alterar o próprio papel ("role").'
+        ),
+        request=UserSerializer,
+        responses=UserSerializer,
+        examples=[
+            OpenApiExample(
+                'Atualizar email',
+                value={'email': 'novo-email@exemplo.com'},
+                request_only=True,
+            ),
+        ],
+    ),
+    delete=extend_schema(
+        summary='Exclui a própria conta',
+        description=(
+            'Exclui a conta do usuário autenticado. As tarefas criadas têm o nome '
+            'do criador preservado como "[DELETADO]" e as referências de criador/'
+            'responsável são anuladas.'
+        ),
+        responses={204: OpenApiResponse(description='Conta excluída.')},
+    ),
+)
 class MeView(APIView):
     """Consulta, altera e exclui a conta do usuário logado."""
 
@@ -130,7 +221,26 @@ class MeView(APIView):
         return Response(serializer.data)
 
 
-@extend_schema(request=ChangePasswordSerializer)
+@extend_schema(
+    summary='Troca a senha',
+    description=(
+        'Troca a senha do usuário autenticado. É necessário informar a senha atual; '
+        'a nova senha precisa ter no mínimo 8 caracteres. Os tokens existentes são '
+        'invalidados, exigindo novo login.'
+    ),
+    request=ChangePasswordSerializer,
+    responses={200: _detail_response('Senha alterada')},
+    examples=[
+        OpenApiExample(
+            'Troca de senha',
+            value={
+                'current_password': 'senha-atual-123',
+                'new_password': 'nova-senha-456',
+            },
+            request_only=True,
+        ),
+    ],
+)
 class ChangePasswordView(APIView):
     """Troca a senha do usuário autenticado."""
 
@@ -150,7 +260,23 @@ class ChangePasswordView(APIView):
         )
 
 
-@extend_schema(request=ForgotPasswordSerializer)
+@extend_schema(
+    summary='Solicita recuperação de senha',
+    description=(
+        'Gera um token de recuperação de senha para o email informado. Em '
+        'desenvolvimento, o email é enviado pelo console backend do Django, então o '
+        'token aparece no terminal do servidor.'
+    ),
+    request=ForgotPasswordSerializer,
+    responses={200: _detail_response('Email de recuperação enviado')},
+    examples=[
+        OpenApiExample(
+            'Solicitar recuperação',
+            value={'email': 'maria@exemplo.com'},
+            request_only=True,
+        ),
+    ],
+)
 class ForgotPasswordView(APIView):
     """Gera token para recuperação de senha e envia pelo console.
 
@@ -176,7 +302,26 @@ class ForgotPasswordView(APIView):
         )
 
 
-@extend_schema(request=ResetPasswordSerializer)
+@extend_schema(
+    summary='Redefine a senha por token',
+    description=(
+        'Redefine a senha usando o token de recuperação recebido por email. O token '
+        'expira em 1 hora e só pode ser usado uma vez. A nova senha precisa ter no '
+        'mínimo 8 caracteres. Os tokens de acesso existentes são invalidados.'
+    ),
+    request=ResetPasswordSerializer,
+    responses={200: _detail_response('Senha redefinida')},
+    examples=[
+        OpenApiExample(
+            'Redefinir senha',
+            value={
+                'token': 'cole-aqui-o-token-recebido',
+                'new_password': 'nova-senha-456',
+            },
+            request_only=True,
+        ),
+    ],
+)
 class ResetPasswordView(APIView):
     """Redefine senha usando token de recuperação."""
 
@@ -192,11 +337,36 @@ class ResetPasswordView(APIView):
 
 
 @extend_schema_view(
-    list=extend_schema(summary='Lista usuários'),
-    retrieve=extend_schema(summary='Detalha usuário'),
-    partial_update=extend_schema(summary='Atualiza usuário parcialmente'),
-    update=extend_schema(summary='Atualiza usuário'),
-    destroy=extend_schema(summary='Exclui usuário'),
+    list=extend_schema(
+        summary='Lista usuários',
+        description='Lista todos os usuários. Restrito a administradores.',
+    ),
+    retrieve=extend_schema(
+        summary='Detalha usuário',
+        description='Retorna os dados de um usuário pelo id.',
+    ),
+    partial_update=extend_schema(
+        summary='Atualiza usuário parcialmente',
+        description=(
+            'Atualiza parcialmente um usuário. Apenas administradores podem alterar '
+            'o papel ("role"); usuários comuns só editam a própria conta.'
+        ),
+        examples=[
+            OpenApiExample(
+                'Promover a administrador',
+                value={'role': 'ADMINISTRADOR'},
+                request_only=True,
+            ),
+        ],
+    ),
+    update=extend_schema(
+        summary='Atualiza usuário',
+        description='Atualiza um usuário. Apenas administradores podem alterar o papel ("role").',
+    ),
+    destroy=extend_schema(
+        summary='Exclui usuário',
+        description='Exclui um usuário. Restrito ao próprio usuário ou a um administrador.',
+    ),
 )
 class UserViewSet(viewsets.ModelViewSet):
     """Gerenciamento de usuários."""
