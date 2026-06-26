@@ -26,6 +26,7 @@ O sistema permite o gerenciamento de tarefas em formato Kanban, com autenticaç�
 * Logout
 * Consulta do usuário logado
 * Edição de perfil
+* Exclusão da própria conta
 * Troca de senha
 * Recuperação de senha por token
 * CRUD de tarefas
@@ -48,7 +49,8 @@ O administrador pode:
 * editar todos os campos de uma tarefa;
 * remover tarefas;
 * acessar a lista de usuários;
-* editar seu próprio perfil.
+* editar seu próprio perfil;
+* excluir qualquer conta de usuário (inclusive a sua).
 
 ### Usuário comum
 
@@ -57,7 +59,8 @@ O usuário comum pode:
 * visualizar as tarefas;
 * alterar o status de tarefas quando for responsável;
 * editar o próprio perfil;
-* trocar sua senha.
+* trocar sua senha;
+* excluir a própria conta.
 
 O usuário comum não pode:
 
@@ -221,6 +224,7 @@ O Swagger adiciona automaticamente o prefixo `Bearer`.
 | POST   | `/auth/logout/`          | Faz logout                         |
 | GET    | `/auth/me/`              | Retorna o usuário logado           |
 | PATCH  | `/auth/me/`              | Atualiza dados do usuário logado   |
+| DELETE | `/auth/me/`              | Exclui a conta do usuário logado   |
 | POST   | `/auth/change-password/` | Troca a senha do usuário logado    |
 | POST   | `/auth/forgot-password/` | Gera token de recuperação de senha |
 | POST   | `/auth/reset-password/`  | Redefine senha usando token        |
@@ -232,6 +236,7 @@ O Swagger adiciona automaticamente o prefixo `Bearer`.
 | GET    | `/users/`     | Lista usuários                |
 | GET    | `/users/:id/` | Detalha um usuário            |
 | PATCH  | `/users/:id/` | Atualiza usuário parcialmente |
+| DELETE | `/users/:id/` | Exclui usuário                |
 
 ### Tarefas
 

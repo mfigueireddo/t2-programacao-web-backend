@@ -7,14 +7,17 @@ de usuários:
 * ``SignupView`` — cadastra um usuário e já devolve um token de acesso.
 * ``LoginView`` — autentica por nome e senha, retornando token e dados do usuário.
 * ``LogoutView`` — invalida o token usado na requisição atual.
-* ``MeView`` — consulta (``GET``) e atualiza parcialmente (``PATCH``) a conta do
-  usuário logado; apenas administradores podem alterar o próprio papel.
+* ``MeView`` — consulta (``GET``), atualiza parcialmente (``PATCH``) e exclui
+  (``DELETE``) a conta do usuário logado; apenas administradores podem alterar
+  o próprio papel.
 * ``ChangePasswordView`` — troca a senha do usuário autenticado.
 * ``ForgotPasswordView`` / ``ResetPasswordView`` — fluxo de recuperação de
   senha por token enviado ao email do usuário (entregue pelo console backend
   do Django durante o desenvolvimento).
-* ``UserViewSet`` — leitura e atualização de usuários; a listagem é restrita a
-  administradores e a alteração de papel só é permitida a administradores.
+* ``UserViewSet`` — leitura, atualização e exclusão de usuários; a listagem é
+  restrita a administradores, a alteração de papel só é permitida a
+  administradores e a exclusão é restrita ao próprio usuário ou a um
+  administrador.
 """
 
 from drf_spectacular.utils import extend_schema, extend_schema_view
@@ -91,12 +94,20 @@ class LogoutView(APIView):
 
 
 class MeView(APIView):
-    """Consulta e altera a conta do usuário logado."""
+    """Consulta, altera e exclui a conta do usuário logado."""
 
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
         return Response(UserSerializer(request.user).data)
+
+    def delete(self, request):
+        # ``pre_delete`` (users.signals) marca o nome do criador nas tarefas
+        # como ``[DELETADO]`` e o Django anula as FKs ``creator``/``responsible``
+        # (ambas ``on_delete=SET_NULL``) e remove os tokens em cascata.
+        request.user.delete()
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     def patch(self, request):
         serializer = UserSerializer(
@@ -185,19 +196,20 @@ class ResetPasswordView(APIView):
     retrieve=extend_schema(summary='Detalha usuário'),
     partial_update=extend_schema(summary='Atualiza usuário parcialmente'),
     update=extend_schema(summary='Atualiza usuário'),
+    destroy=extend_schema(summary='Exclui usuário'),
 )
 class UserViewSet(viewsets.ModelViewSet):
     """Gerenciamento de usuários."""
 
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    http_method_names = ['get', 'patch', 'put', 'head', 'options']
+    http_method_names = ['get', 'patch', 'put', 'delete', 'head', 'options']
 
     def get_permissions(self):
         if self.action == 'list':
             return [IsAdministrador()]
 
-        if self.action in ('retrieve', 'partial_update', 'update'):
+        if self.action in ('retrieve', 'partial_update', 'update', 'destroy'):
             return [permissions.IsAuthenticated(), IsSelfOrAdministrador()]
 
         return [permissions.IsAuthenticated()]

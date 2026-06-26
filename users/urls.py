@@ -9,14 +9,16 @@ Rotas de autenticação:
     - ``POST auth/signup/``          -> cadastro de usuário.
     - ``POST auth/login/``           -> login (retorna token + dados do usuário).
     - ``POST auth/logout/``          -> logout (invalida o token atual).
-    - ``GET  auth/me/``              -> dados do usuário autenticado.
-    - ``POST auth/change-password/`` -> troca de senha do usuário autenticado.
-    - ``POST auth/forgot-password/`` -> inicia a recuperação de senha.
-    - ``POST auth/reset-password/``  -> redefine a senha via token.
+    - ``GET    auth/me/``              -> dados do usuário autenticado.
+    - ``DELETE auth/me/``              -> exclui a conta do usuário autenticado.
+    - ``POST   auth/change-password/`` -> troca de senha do usuário autenticado.
+    - ``POST   auth/forgot-password/`` -> inicia a recuperação de senha.
+    - ``POST   auth/reset-password/``  -> redefine a senha via token.
 
 Rotas de usuários (``UserViewSet``):
-    - ``GET  users/``        -> lista todos os usuários (apenas ADMINISTRADOR).
-    - ``GET  users/<id>/``   -> detalha um usuário e seu papel.
+    - ``GET    users/``        -> lista todos os usuários (apenas ADMINISTRADOR).
+    - ``GET    users/<id>/``   -> detalha um usuário e seu papel.
+    - ``DELETE users/<id>/``   -> exclui um usuário (o próprio ou ADMINISTRADOR).
 """
 
 from django.urls import path
