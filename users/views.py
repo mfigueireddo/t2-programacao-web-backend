@@ -1,14 +1,21 @@
-"""Views (camada de API) do domínio de Usuários (Users).
-
-Expõe a consulta de um usuário por ``id`` para que o frontend descubra seu papel
-(permissão). Enquanto não há autenticação por token, esta é a forma de o cliente
-saber quais ações deve habilitar na interface para o usuário informado.
-
-Expõe também a listagem de todos os usuários do sistema, restrita a
-administradores autenticados.
 """
+Views (camada de API) do domínio de Usuários (Users).
 
-"""Views de usuários, autenticação e perfil."""
+Implementa os endpoints de autenticação própria do projeto e o gerenciamento
+de usuários:
+
+* ``SignupView`` — cadastra um usuário e já devolve um token de acesso.
+* ``LoginView`` — autentica por nome e senha, retornando token e dados do usuário.
+* ``LogoutView`` — invalida o token usado na requisição atual.
+* ``MeView`` — consulta (``GET``) e atualiza parcialmente (``PATCH``) a conta do
+  usuário logado; apenas administradores podem alterar o próprio papel.
+* ``ChangePasswordView`` — troca a senha do usuário autenticado.
+* ``ForgotPasswordView`` / ``ResetPasswordView`` — fluxo simplificado de
+  recuperação de senha (o token é retornado na resposta, em vez de enviado por
+  email).
+* ``UserViewSet`` — leitura e atualização de usuários; a listagem é restrita a
+  administradores e a alteração de papel só é permitida a administradores.
+"""
 
 from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import permissions, status, viewsets

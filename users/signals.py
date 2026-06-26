@@ -1,4 +1,5 @@
-"""Sinais (signals) do domínio de Usuários.
+"""
+Sinais (signals) do domínio de Usuários.
 
 Mantêm o nome do criador, armazenado de forma desnormalizada em
 :attr:`tasks.models.Task.creator_name`, sincronizado com o usuário de origem.
@@ -9,24 +10,17 @@ São tratados dois eventos do ciclo de vida do :class:`users.models.User`:
 - **Exclusão da conta** (``pre_delete``): o nome salvo passa a seguir o formato
   ``[DELETADO] <último nome>``. Em seguida, o próprio Django anula as FKs
   ``creator`` e ``responsible`` (ambas ``on_delete=SET_NULL``).
-
-Opta-se por sinais — e não apenas por sobrescrever ``save``/``delete`` no
-modelo — porque ``pre_delete`` é disparado para cada objeto também em exclusões
-em lote (por exemplo, a ação "remover selecionados" do admin), garantindo que a
-regra de negócio valha independentemente de como a exclusão é realizada.
 """
 
 from django.db.models.signals import post_save, pre_delete
 from django.dispatch import receiver
-
 from tasks.models import Task
-
 from .models import User
-
 
 @receiver(post_save, sender=User)
 def sync_creator_name_on_rename(sender, instance, created, **kwargs):
-    """Propaga o nome atual do usuário para as tarefas que ele criou.
+    """
+    Propaga o nome atual do usuário para as tarefas que ele criou.
 
     Descrição:
         Após salvar um usuário, atualiza o campo desnormalizado
@@ -51,10 +45,8 @@ def sync_creator_name_on_rename(sender, instance, created, **kwargs):
           recém-criado ainda não é criador de nenhuma tarefa).
         - Caso contrário, toda tarefa com ``creator == instance`` passa a ter
           ``creator_name == instance.name``.
-
-    Retornos:
-        None.
     """
+    
     if created:
         # Usuário recém-criado ainda não é criador de nenhuma tarefa.
         return

@@ -1,10 +1,9 @@
-"""Configuração do site administrativo do Django para o domínio de Usuários.
+"""
+Configuração do site administrativo do Django para o domínio de Usuários.
 
 Registra o modelo :class:`users.models.User` no admin, permitindo inspecionar e
 manipular usuários pela interface administrativa durante o desenvolvimento.
 """
-
-"""Admin do domínio de Usuários."""
 
 from django.contrib import admin
 

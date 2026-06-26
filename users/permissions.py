@@ -1,15 +1,12 @@
-"""Permissões (autorização por papel) do domínio de Usuários (Users).
+"""P
+ermissões (autorização por papel) do domínio de Usuários (Users).
 
 Define quem pode executar cada ação sobre usuários, com base no papel
 (:class:`users.models.User.Role`) do usuário identificado em ``request.user``.
 """
 
-"""Permissões do domínio de Usuários."""
-
 from rest_framework import permissions
-
 from .models import User
-
 
 class IsAdministrador(permissions.BasePermission):
     message = 'Apenas administradores podem executar esta ação.'

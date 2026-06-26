@@ -1,16 +1,23 @@
-"""Roteamento de URLs do domínio de Usuários (Users).
-
-Mapeia os caminhos do app (montados sob o prefixo ``users/`` pela URLconf raiz)
-para as views do :mod:`users.views`. Por ora, expõe apenas a consulta de um
-usuário por ``id`` para descoberta de papel (permissão) e a listagem de todos
-os usuários (restrita a administradores).
-
-Rotas expostas:
-    - ``GET users/`` -> lista todos os usuários (apenas ADMINISTRADOR).
-    - ``GET users/<id>/`` -> detalha um usuário e seu papel.
 """
+Roteamento de URLs do domínio de Usuários (Users).
 
-"""Rotas de usuários e autenticação."""
+Mapeia os caminhos do app (incluídos na raiz pela URLconf do projeto) para as
+views de :mod:`users.views`, cobrindo tanto a autenticação quanto a gestão de
+usuários.
+
+Rotas de autenticação:
+    - ``POST auth/signup/``          -> cadastro de usuário.
+    - ``POST auth/login/``           -> login (retorna token + dados do usuário).
+    - ``POST auth/logout/``          -> logout (invalida o token atual).
+    - ``GET  auth/me/``              -> dados do usuário autenticado.
+    - ``POST auth/change-password/`` -> troca de senha do usuário autenticado.
+    - ``POST auth/forgot-password/`` -> inicia a recuperação de senha.
+    - ``POST auth/reset-password/``  -> redefine a senha via token.
+
+Rotas de usuários (``UserViewSet``):
+    - ``GET  users/``        -> lista todos os usuários (apenas ADMINISTRADOR).
+    - ``GET  users/<id>/``   -> detalha um usuário e seu papel.
+"""
 
 from django.urls import path
 from rest_framework.routers import DefaultRouter

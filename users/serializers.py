@@ -1,16 +1,25 @@
-"""Serializers do domínio de Usuários (Users).
+"""
+Serializers do domínio de Usuários (Users).
 
-Define a tradução entre instâncias do modelo :class:`users.models.User` e a
-representação JSON produzida pela API REST. Por ora, expõe apenas os dados
-necessários para que o frontend descubra o papel (permissão) de um usuário.
+Define a tradução entre os modelos de :mod:`users.models` e a representação
+JSON da API REST, além de concentrar as validações dos fluxos de autenticação:
+
+* ``UserSerializer`` — representação pública de um usuário (id, nome, papel).
+* ``SignupSerializer`` — cadastro de usuário, com validação de nome único e
+  criação da senha em formato de hash.
+* ``LoginSerializer`` — valida nome e senha e resolve o usuário autenticado.
+* ``LoginResponseSerializer`` — resposta do login (token + dados do usuário).
+* ``ChangePasswordSerializer`` — troca de senha do usuário autenticado,
+  conferindo a senha atual.
+* ``ForgotPasswordSerializer`` / ``ResetPasswordSerializer`` — fluxo
+  simplificado de recuperação de senha via :class:`users.models.PasswordResetToken`.
+
+Tanto a troca quanto a redefinição de senha invalidam os tokens de autenticação
+existentes do usuário.
 """
 
-"""Serializers do domínio de Usuários e autenticação."""
-
 from rest_framework import serializers
-
 from .models import AuthToken, PasswordResetToken, User
-
 
 class UserSerializer(serializers.ModelSerializer):
     role_display = serializers.CharField(source='get_role_display', read_only=True)

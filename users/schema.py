@@ -2,7 +2,6 @@
 
 from drf_spectacular.extensions import OpenApiAuthenticationExtension
 
-
 class TokenAuthenticationScheme(OpenApiAuthenticationExtension):
     target_class = 'users.authentication.TokenAuthentication'
     name = 'BearerAuth'

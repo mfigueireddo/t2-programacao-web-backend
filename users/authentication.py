@@ -1,23 +1,16 @@
-"""Autenticação (provisória) do domínio de Usuários.
-
-Enquanto o projeto não possui login/autenticação de verdade (cf. observação em
-:mod:`users.models`), esta classe oferece uma forma **temporária** de o backend
-descobrir *quem* está fazendo a requisição: o cliente informa o ``id`` do
-usuário no cabeçalho HTTP ``X-User-Id`` e o backend resolve a instância
-correspondente, populando ``request.user`` exatamente como uma autenticação real
-faria.
-
-Atenção (segurança):
-    Este mecanismo é **inseguro** e serve apenas para destravar as regras de
-    autorização por papel durante o desenvolvimento. Qualquer cliente pode se
-    declarar o usuário que quiser, pois não há prova de identidade (senha,
-    token assinado, etc.). Deve ser substituído por autenticação real (ex.:
-    Token/JWT) antes de qualquer uso em produção. Por se basear em
-    ``request.user``, a troca não exigirá mudanças nas permissões nem nos
-    serializers.
 """
+Autenticação por token do domínio de Usuários.
 
-"""Autenticação por token para a API."""
+O projeto possui autenticação própria baseada em tokens. Após o login (cf.
+fluxo em :mod:`users`), o cliente recebe um token e o envia em cada requisição
+no cabeçalho HTTP ``Authorization: Bearer <token>``. Esta classe lê esse
+cabeçalho, valida o token contra o modelo :class:`users.models.AuthToken` e
+popula ``request.user`` com o usuário correspondente, permitindo que as regras
+de autorização por papel funcionem.
+
+Por se basear em ``request.user``, as permissões e os serializers não precisam
+conhecer os detalhes do mecanismo de autenticação.
+"""
 
 from rest_framework import authentication, exceptions
 
