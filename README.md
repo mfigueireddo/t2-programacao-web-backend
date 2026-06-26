@@ -4,6 +4,10 @@ Backend do sistema **Quadro Kanban**, desenvolvido para a disciplina de Programa
 
 O frontend do projeto está disponível [aqui](https://github.com/mfigueireddo/t2-programacao-web-frontend).
 
+Disponível em produção em: https://t2-programacao-web-backend.onrender.com/
+
+---
+
 ## Integrantes
 
 * Luana Nobre (2310204)
