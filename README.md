@@ -1,17 +1,5 @@
 # Quadro Kanban — Backend
 
-## Documentação
-
-A pasta [docs/](docs/) reúne toda a documentação do projeto:
-
-| Arquivo | Descrição |
-|---------|-----------|
-| [docs/BUILD.md](docs/BUILD.md) | Passo a passo de instalação e execução: criação do ambiente virtual, instalação das dependências, migrações e como subir o servidor de desenvolvimento. |
-| [docs/USAGE.md](docs/USAGE.md) | Guia de uso da API: formas de explorar os endpoints (Swagger, interface do DRF, `curl`), referência das rotas e campos da Tarefa, exemplos de requisições e códigos de resposta. |
-| [docs/OVERVIEW.md](docs/OVERVIEW.md) | Visão geral da arquitetura e roteiro de leitura do código, explicando o fluxo de uma requisição e o papel de cada arquivo do projeto. |
-| [docs/TODO.md](docs/TODO.md) | Lista de pendências e melhorias previstas para o projeto. |
-
-
 Backend REST do sistema **Quadro Kanban**, desenvolvido para a disciplina de Programação Web.
 
 O sistema permite o gerenciamento de tarefas em formato Kanban, com autenticação de usuários, controle de permissões por papel, proteção dos endpoints de tarefas e documentação da API com Swagger.
@@ -19,7 +7,7 @@ O sistema permite o gerenciamento de tarefas em formato Kanban, com autenticaç�
 ## Integrantes
 
 * Luana Nobre (2310204)
-* Nome do integrante 2
+* Matheus Figueiredo (2320813)
 
 ## Tecnologias utilizadas
 
@@ -45,6 +33,8 @@ O sistema permite o gerenciamento de tarefas em formato Kanban, com autenticaç�
 * Proteção dos endpoints de tarefas
 * Documentação da API com Swagger
 
+---
+
 ## Regras de permissão
 
 O sistema possui dois tipos de usuário:
@@ -65,7 +55,6 @@ O administrador pode:
 O usuário comum pode:
 
 * visualizar as tarefas;
-* editar apenas ações permitidas sobre tarefas;
 * alterar o status de tarefas quando for responsável;
 * editar o próprio perfil;
 * trocar sua senha.
@@ -75,6 +64,8 @@ O usuário comum não pode:
 * criar tarefas;
 * remover tarefas;
 * alterar livremente todos os campos de uma tarefa.
+
+---
 
 ## Modelos principais
 
@@ -116,7 +107,29 @@ No frontend, esses status são exibidos como:
 * Pronto
 * Entregue
 
+---
+
 ## Como rodar o backend localmente
+
+### TL-DR
+
+Windows
+```bash
+python -m venv .venv
+.venv\Scripts\activate
+pip install -r requirements.txt
+python manage.py migrate
+python manage.py runserver
+```
+
+Linux/Mac
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+python manage.py migrate
+python manage.py runserver
+```
 
 ### 1. Entrar na pasta do backend
 
@@ -164,6 +177,12 @@ A API ficará disponível em:
 http://127.0.0.1:8000/
 ```
 
+### [OPCIONAL] Criar superusuário
+
+```bash
+python manage.py createsuperuser
+```
+
 ## Swagger
 
 A documentação da API está disponível em:
@@ -188,6 +207,8 @@ http://127.0.0.1:8000/swagger/
 4. Cole apenas o token no campo de autenticação.
 
 O Swagger adiciona automaticamente o prefixo `Bearer`.
+
+---
 
 ## Principais endpoints
 
@@ -223,6 +244,8 @@ O Swagger adiciona automaticamente o prefixo `Bearer`.
 | PATCH  | `/tasks/:id/` | Atualiza tarefa parcialmente |
 | DELETE | `/tasks/:id/` | Remove tarefa                |
 
+---
+
 ## Usuários de teste
 
 Após a criação dos dados de demonstração, os seguintes usuários podem ser usados:
@@ -241,22 +264,13 @@ Nome: usuario
 Senha: 12345678
 ```
 
-## Dados de demonstração
-
-O banco de dados de demonstração possui tarefas distribuídas nas colunas:
-
-* A Fazer
-* Em Progresso
-* Pronto
-* Entregue
-
-Essas tarefas foram criadas para facilitar a visualização do funcionamento do Kanban e das permissões.
+---
 
 ## Recuperação de senha
 
 A recuperação de senha foi implementada por meio de um token gerado pelo backend.
 
-Para fins acadêmicos e de demonstração, o token é exibido diretamente na resposta da API e na tela do frontend. Em um sistema real de produção, esse token poderia ser enviado por email ao usuário.
+Para fins acadêmicos e de demonstração, o token é exibido diretamente na resposta da API e na tela do frontend.
 
 ## Testes realizados
 
@@ -290,8 +304,3 @@ Funcionalidades principais implementadas e testadas:
 * permissões;
 * Swagger;
 * proteção dos endpoints de tarefas.
-
-## Links
-
-* Frontend publicado: COLE_AQUI_O_LINK_DO_FRONTEND_PUBLICADO
-* Backend publicado: COLE_AQUI_O_LINK_DO_BACKEND_PUBLICADO
