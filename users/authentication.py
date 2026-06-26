@@ -17,66 +17,39 @@ Atenção (segurança):
     serializers.
 """
 
+"""Autenticação por token para a API."""
+
 from rest_framework import authentication, exceptions
 
-from .models import User
+from .models import AuthToken
 
 
-class ProvisionalHeaderAuthentication(authentication.BaseAuthentication):
-    """Resolve o usuário da requisição a partir do cabeçalho ``X-User-Id``.
+class TokenAuthentication(authentication.BaseAuthentication):
+    """Autentica usando o cabeçalho Authorization: Bearer <token>."""
 
-    Descrição:
-        Lê o ``id`` enviado no cabeçalho ``X-User-Id`` e devolve o
-        :class:`users.models.User` correspondente para que o DRF o exponha em
-        ``request.user``. Na ausência do cabeçalho, a requisição é tratada como
-        anônima (``request.user`` torna-se ``AnonymousUser``).
-
-    Objetivo:
-        Fornecer, de forma provisória, a identidade necessária para as regras de
-        autorização por papel, sem ainda implementar autenticação completa.
-
-    Assertivas de entrada:
-        - Quando presente, ``X-User-Id`` é o ``id`` (inteiro) de um usuário
-          existente.
-
-    Assertivas de saída:
-        - Sem o cabeçalho: retorna ``None`` (acesso anônimo).
-        - Com cabeçalho válido: retorna ``(user, None)`` e ``user`` passa a ser
-          ``request.user``.
-        - Com cabeçalho inválido (não numérico ou usuário inexistente): levanta
-          ``AuthenticationFailed`` (HTTP 401).
-    """
+    keyword = 'Bearer'
 
     def authenticate(self, request):
-        """Identifica o usuário da requisição pelo cabeçalho ``X-User-Id``.
+        header = request.headers.get('Authorization')
 
-        Parâmetros:
-            self (ProvisionalHeaderAuthentication): A instância autenticadora.
-            request (rest_framework.request.Request): A requisição recebida.
-
-        Assertivas de entrada:
-            - ``request`` expõe os cabeçalhos HTTP em ``request.headers``.
-
-        Assertivas de saída:
-            - Retorna ``None`` quando ``X-User-Id`` está ausente.
-            - Retorna ``(User, None)`` quando o cabeçalho referencia um usuário
-              existente.
-
-        Retornos:
-            tuple[User, None] | None: O par ``(usuário, auth)`` exigido pelo DRF,
-            ou ``None`` para indicar requisição anônima.
-        """
-        user_id = request.headers.get('X-User-Id')
-        if not user_id:
-            # Sem cabeçalho: requisição anônima. As permissões decidem se o
-            # acesso anônimo é permitido para a ação solicitada.
+        if not header:
             return None
 
-        try:
-            user = User.objects.get(pk=user_id)
-        except (User.DoesNotExist, ValueError, TypeError):
+        parts = header.split()
+
+        if len(parts) != 2 or parts[0] != self.keyword:
             raise exceptions.AuthenticationFailed(
-                'Cabeçalho X-User-Id inválido: usuário não encontrado.'
+                'Cabeçalho Authorization inválido. Use: Bearer <token>.'
             )
 
-        return (user, None)
+        token_key = parts[1]
+
+        try:
+            token = AuthToken.objects.select_related('user').get(key=token_key)
+        except AuthToken.DoesNotExist:
+            raise exceptions.AuthenticationFailed('Token inválido ou expirado.')
+
+        return token.user, token
+
+    def authenticate_header(self, request):
+        return self.keyword

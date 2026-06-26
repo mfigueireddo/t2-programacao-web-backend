@@ -12,15 +12,17 @@ Rotas de nível raiz:
     - ``swagger/``     -> interface Swagger UI navegável.
 """
 
+"""Configuração de URLs raiz do projeto."""
+
 from django.contrib import admin
 from django.urls import include, path
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('tasks/', include('tasks.urls')),
-    path('users/', include('users.urls')),
-    # Documentação da API (drf-spectacular).
+    path('', include('users.urls')),
     path('schema/', SpectacularAPIView.as_view(), name='schema'),
     path(
         'swagger/',

@@ -10,11 +10,33 @@ Rotas expostas:
     - ``GET users/<id>/`` -> detalha um usuário e seu papel.
 """
 
-from django.urls import path
+"""Rotas de usuários e autenticação."""
 
-from .views import UserListView, UserRetrieveView
+from django.urls import path
+from rest_framework.routers import DefaultRouter
+
+from .views import (
+    ChangePasswordView,
+    ForgotPasswordView,
+    LoginView,
+    LogoutView,
+    MeView,
+    ResetPasswordView,
+    SignupView,
+    UserViewSet,
+)
+
+router = DefaultRouter()
+router.register(r'users', UserViewSet, basename='user')
 
 urlpatterns = [
-    path('', UserListView.as_view(), name='user-list'),
-    path('<int:pk>/', UserRetrieveView.as_view(), name='user-detail'),
+    path('auth/signup/', SignupView.as_view(), name='auth-signup'),
+    path('auth/login/', LoginView.as_view(), name='auth-login'),
+    path('auth/logout/', LogoutView.as_view(), name='auth-logout'),
+    path('auth/me/', MeView.as_view(), name='auth-me'),
+    path('auth/change-password/', ChangePasswordView.as_view(), name='auth-change-password'),
+    path('auth/forgot-password/', ForgotPasswordView.as_view(), name='auth-forgot-password'),
+    path('auth/reset-password/', ResetPasswordView.as_view(), name='auth-reset-password'),
 ]
+
+urlpatterns += router.urls

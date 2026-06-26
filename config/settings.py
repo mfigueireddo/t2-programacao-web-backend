@@ -10,26 +10,23 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
+"""
+Django settings for config project.
+"""
+
 from pathlib import Path
+
 from corsheaders.defaults import default_headers
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-z+kq&==xuh0q89@_&*9gm*_fib_-+2ib(=ss5b=0j90i_r+^26'
 
-# SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-# Hosts autorizados a servir esta aplicação. Em desenvolvimento liberamos os
-# endereços locais e o host usado pelo cliente de testes do Django.
 ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'testserver']
 
-# Application definition
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -38,14 +35,15 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    # Bibliotecas de terceiros
-    'rest_framework',           # Django REST Framework: construção da API REST.
-    'drf_spectacular',          # Geração do schema OpenAPI e da interface Swagger.
-    'corsheaders',              # Habilita CORS para consumo pelo frontend externo.
-    # Aplicações do projeto
-    'users',                    # Domínio de Usuários.
-    'tasks',                    # Domínio de Tarefas.
+
+    'rest_framework',
+    'drf_spectacular',
+    'corsheaders',
+
+    'users.apps.UsersConfig',
+    'tasks',
 ]
+
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
@@ -58,7 +56,9 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+
 ROOT_URLCONF = 'config.urls'
+
 
 TEMPLATES = [
     {
@@ -75,10 +75,9 @@ TEMPLATES = [
     },
 ]
 
+
 WSGI_APPLICATION = 'config.wsgi.application'
 
-# Database
-# https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
 DATABASES = {
     'default': {
@@ -87,8 +86,6 @@ DATABASES = {
     }
 }
 
-# Password validation
-# https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -105,42 +102,30 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-# Django REST Framework
-# https://www.django-rest-framework.org/api-guide/settings/
+
 REST_FRAMEWORK = {
-    # Usa o gerador de schema do drf-spectacular para alimentar o Swagger.
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
-    # Autenticação provisória: identifica o usuário pelo cabeçalho X-User-Id
-    # (cf. users.authentication). Deve ser substituída por autenticação real
-    # (ex.: Token/JWT) quando o login for implementado.
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'users.authentication.ProvisionalHeaderAuthentication',
+        'users.authentication.TokenAuthentication',
     ],
 }
 
-# drf-spectacular (Swagger / OpenAPI)
-# https://drf-spectacular.readthedocs.io/en/latest/settings.html
+
 SPECTACULAR_SETTINGS = {
     'TITLE': 'API do Quadro Kanban',
     'DESCRIPTION': 'Backend REST do projeto de Quadro Kanban',
-    'VERSION': '0.1.0',
-    # Não serve o schema bruto dentro da UI do Swagger; usamos a rota dedicada.
+    'VERSION': '1.0.0',
     'SERVE_INCLUDE_SCHEMA': False,
 }
 
-# CORS
-# https://github.com/adamchainz/django-cors-headers
-# Em desenvolvimento, liberamos todas as origens para facilitar o consumo pelo
-# frontend hospedado em outro domínio. Em produção, restringir via CORS_ALLOWED_ORIGINS.
+
 CORS_ALLOW_ALL_ORIGINS = True
 
 CORS_ALLOW_HEADERS = [
     *default_headers,
-    "x-user-id",
+    'authorization',
 ]
 
-# Internationalization
-# https://docs.djangoproject.com/en/6.0/topics/i18n/
 
 LANGUAGE_CODE = 'pt-br'
 
@@ -149,8 +134,5 @@ TIME_ZONE = 'America/Sao_Paulo'
 USE_I18N = True
 
 USE_TZ = True
-
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
