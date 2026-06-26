@@ -1,22 +1,99 @@
 # Quadro Kanban — Backend
 
-Backend REST do sistema **Quadro Kanban**, desenvolvido para a disciplina de Programação Web.
+Backend do sistema **Quadro Kanban**, desenvolvido para a disciplina de Programação Web.
 
-O sistema permite o gerenciamento de tarefas em formato Kanban, com autenticação de usuários, controle de permissões por papel, proteção dos endpoints de tarefas e documentação da API com Swagger.
+O frontend do projeto está disponível [aqui](https://github.com/mfigueireddo/t2-programacao-web-frontend).
 
 ## Integrantes
 
 * Luana Nobre (2310204)
 * Matheus Figueiredo (2320813)
 
-## Tecnologias utilizadas
+---
 
-* Python
-* Django
-* Django REST Framework
-* drf-spectacular
-* django-cors-headers
-* SQLite
+## Como rodar o backend localmente
+
+### TL-DR
+
+Windows
+```bash
+python -m venv .venv
+.venv\Scripts\activate
+pip install -r requirements.txt
+python manage.py migrate
+python manage.py runserver
+```
+
+Linux/Mac
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+python manage.py migrate
+python manage.py runserver
+```
+
+### 1. Entrar na pasta do backend
+
+```bash
+cd t2-programacao-web-backend
+```
+
+### 2. Criar e ativar ambiente virtual
+
+No Windows:
+
+```bash
+python -m venv .venv
+.venv\Scripts\activate
+```
+
+No Linux/Mac:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+```
+
+### 3. Instalar dependências
+
+```bash
+pip install -r requirements.txt
+```
+
+### 4. Rodar as migrações
+
+```bash
+python manage.py migrate
+```
+
+### 5. Rodar o servidor
+
+```bash
+python manage.py runserver
+```
+
+A API ficará disponível em:
+
+```text
+http://127.0.0.1:8000/
+```
+
+### [OPCIONAL] Criar superusuário
+
+```bash
+python manage.py createsuperuser
+```
+
+## Swagger
+
+A documentação da API está disponível em:
+
+```text
+http://127.0.0.1:8000/swagger/
+```
+
+---
 
 ## Funcionalidades implementadas
 
@@ -112,107 +189,6 @@ No frontend, esses status são exibidos como:
 
 ---
 
-## Como rodar o backend localmente
-
-### TL-DR
-
-Windows
-```bash
-python -m venv .venv
-.venv\Scripts\activate
-pip install -r requirements.txt
-python manage.py migrate
-python manage.py runserver
-```
-
-Linux/Mac
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-python manage.py migrate
-python manage.py runserver
-```
-
-### 1. Entrar na pasta do backend
-
-```bash
-cd t2-programacao-web-backend
-```
-
-### 2. Criar e ativar ambiente virtual
-
-No Windows:
-
-```bash
-python -m venv .venv
-.venv\Scripts\activate
-```
-
-No Linux/Mac:
-
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-```
-
-### 3. Instalar dependências
-
-```bash
-pip install -r requirements.txt
-```
-
-### 4. Rodar as migrações
-
-```bash
-python manage.py migrate
-```
-
-### 5. Rodar o servidor
-
-```bash
-python manage.py runserver
-```
-
-A API ficará disponível em:
-
-```text
-http://127.0.0.1:8000/
-```
-
-### [OPCIONAL] Criar superusuário
-
-```bash
-python manage.py createsuperuser
-```
-
-## Swagger
-
-A documentação da API está disponível em:
-
-```text
-http://127.0.0.1:8000/swagger/
-```
-
-<!-- ADICIONE AQUI UM PRINT DO SWAGGER MOSTRANDO AS ROTAS DE AUTH E TASKS -->
-
-## Como autenticar no Swagger
-
-1. Faça login ou cadastro usando um dos endpoints:
-
-   * `POST /auth/login/`
-   * `POST /auth/signup/`
-
-2. Copie o token retornado.
-
-3. Clique no botão **Authorize** no Swagger.
-
-4. Cole apenas o token no campo de autenticação.
-
-O Swagger adiciona automaticamente o prefixo `Bearer`.
-
----
-
 ## Principais endpoints
 
 ### Autenticação
@@ -251,61 +227,23 @@ O Swagger adiciona automaticamente o prefixo `Bearer`.
 
 ---
 
-## Usuários de teste
-
-Após a criação dos dados de demonstração, os seguintes usuários podem ser usados:
-
-### Administrador
-
-```text
-Nome: admin
-Senha: 12345678
-```
-
-### Usuário comum
-
-```text
-Nome: usuario
-Senha: 12345678
-```
-
----
-
 ## Recuperação de senha
 
 A recuperação de senha foi implementada por meio de um token gerado pelo backend e enviado ao email do usuário.
 
 Para fins acadêmicos e de demonstração, o email é entregue pelo console backend do Django, de modo que o token aparece no terminal do backend.
 
-## Testes realizados
 
-Foram testados os seguintes comportamentos:
+## O que funciona e o que não funciona
 
-* criação de usuário administrador;
-* criação de usuário comum;
-* login com token;
-* consulta do usuário logado;
-* listagem de tarefas com usuário autenticado;
-* bloqueio da listagem de tarefas sem token;
-* criação de tarefa por administrador;
-* bloqueio de criação de tarefa por usuário comum;
-* logout;
-* troca de senha;
-* recuperação de senha;
-* acesso à documentação Swagger.
+Dado o que foi proposto, tudo foi testado e funciona. A única limitação a se pontuar é que a recuperação de senha via e-mail é apenas exibida no terminal da aplicação, em vez de ser enviada por e-mail de fato.
 
-## Status do projeto
+---
 
-Funcionalidades principais implementadas e testadas:
+### Algumas imagens da versão final do projeto
 
-* autenticação;
-* cadastro;
-* login;
-* logout;
-* perfil;
-* troca de senha;
-* recuperação de senha;
-* Kanban;
-* permissões;
-* Swagger;
-* proteção dos endpoints de tarefas.
+![Swagger](images/swagger.png)
+
+![Schemas](images/schemas.png)
+
+![Admin](images/admin.png)
