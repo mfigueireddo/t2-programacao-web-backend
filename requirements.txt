@@ -4,6 +4,10 @@ djangorestframework==3.17.1
 django-cors-headers==4.9.0
 drf-spectacular==0.29.0
 
+# Deploy
+gunicorn==23.0.0
+whitenoise==6.8.2
+
 # Automáticas
 asgiref==3.11.1
 attrs==26.1.0

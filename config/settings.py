@@ -14,6 +14,7 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 Django settings for config project.
 """
 
+import os
 from pathlib import Path
 
 from corsheaders.defaults import default_headers
@@ -21,11 +22,19 @@ from corsheaders.defaults import default_headers
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = 'django-insecure-z+kq&==xuh0q89@_&*9gm*_fib_-+2ib(=ss5b=0j90i_r+^26'
+SECRET_KEY = os.environ.get(
+    'SECRET_KEY',
+    'django-insecure-z+kq&==xuh0q89@_&*9gm*_fib_-+2ib(=ss5b=0j90i_r+^26',
+)
 
-DEBUG = True
+DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 
 ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'testserver']
+
+# Render fornece o host público automaticamente nesta variável.
+RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
+if RENDER_EXTERNAL_HOSTNAME:
+    ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
 
 
 INSTALLED_APPS = [
@@ -48,6 +57,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -136,6 +146,17 @@ USE_I18N = True
 USE_TZ = True
 
 STATIC_URL = 'static/'
+
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+STORAGES = {
+    'default': {
+        'BACKEND': 'django.core.files.storage.FileSystemStorage',
+    },
+    'staticfiles': {
+        'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage',
+    },
+}
 
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 DEFAULT_FROM_EMAIL = 'kanban@localhost'
