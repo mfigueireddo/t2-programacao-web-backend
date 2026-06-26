@@ -5,9 +5,10 @@ services:
     plan: free
     buildCommand: >-
       pip install -r requirements.txt &&
-      python manage.py collectstatic --no-input &&
-      python manage.py migrate
-    startCommand: gunicorn config.wsgi:application
+      python manage.py collectstatic --no-input
+    startCommand: >-
+      python manage.py migrate --noinput &&
+      gunicorn config.wsgi:application
     envVars:
       - key: DEBUG
         value: "False"
