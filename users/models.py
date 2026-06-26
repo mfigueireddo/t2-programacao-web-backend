@@ -4,8 +4,9 @@ Modelos de dados do domínio de Usuários (Users).
 Este módulo define a entidade ``User``, que representa um usuário do quadro
 Kanban, junto com os modelos de apoio à autenticação própria do projeto:
 
-* ``User`` — usuário do quadro, com nome, papel (ADMINISTRADOR ou USUARIO) e
-  senha armazenada como hash. É um modelo **independente** do sistema de
+* ``User`` — usuário do quadro, com nome, email (usado na recuperação de
+  senha), papel (ADMINISTRADOR ou USUARIO) e senha armazenada como hash. É um
+  modelo **independente** do sistema de
   autenticação do Django, mas implementa os métodos necessários (``set_password``,
   ``check_password``, ``is_authenticated``) para suportar login e autorização
   por papel.

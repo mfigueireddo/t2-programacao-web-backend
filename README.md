@@ -268,9 +268,9 @@ Senha: 12345678
 
 ## Recuperação de senha
 
-A recuperação de senha foi implementada por meio de um token gerado pelo backend.
+A recuperação de senha foi implementada por meio de um token gerado pelo backend e enviado ao email do usuário.
 
-Para fins acadêmicos e de demonstração, o token é exibido diretamente na resposta da API e na tela do frontend.
+Para fins acadêmicos e de demonstração, o email é entregue pelo console backend do Django, de modo que o token aparece no terminal do backend.
 
 ## Testes realizados
 

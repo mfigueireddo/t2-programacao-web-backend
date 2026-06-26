@@ -10,9 +10,9 @@ de usuários:
 * ``MeView`` — consulta (``GET``) e atualiza parcialmente (``PATCH``) a conta do
   usuário logado; apenas administradores podem alterar o próprio papel.
 * ``ChangePasswordView`` — troca a senha do usuário autenticado.
-* ``ForgotPasswordView`` / ``ResetPasswordView`` — fluxo simplificado de
-  recuperação de senha (o token é retornado na resposta, em vez de enviado por
-  email).
+* ``ForgotPasswordView`` / ``ResetPasswordView`` — fluxo de recuperação de
+  senha por token enviado ao email do usuário (entregue pelo console backend
+  do Django durante o desenvolvimento).
 * ``UserViewSet`` — leitura e atualização de usuários; a listagem é restrita a
   administradores e a alteração de papel só é permitida a administradores.
 """

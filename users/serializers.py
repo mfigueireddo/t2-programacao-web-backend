@@ -4,15 +4,18 @@ Serializers do domínio de Usuários (Users).
 Define a tradução entre os modelos de :mod:`users.models` e a representação
 JSON da API REST, além de concentrar as validações dos fluxos de autenticação:
 
-* ``UserSerializer`` — representação pública de um usuário (id, nome, papel).
-* ``SignupSerializer`` — cadastro de usuário, com validação de nome único e
-  criação da senha em formato de hash.
+* ``UserSerializer`` — representação pública de um usuário (id, nome, email,
+  papel).
+* ``SignupSerializer`` — cadastro de usuário, com validação de nome e email
+  únicos e criação da senha em formato de hash.
 * ``LoginSerializer`` — valida nome e senha e resolve o usuário autenticado.
 * ``LoginResponseSerializer`` — resposta do login (token + dados do usuário).
 * ``ChangePasswordSerializer`` — troca de senha do usuário autenticado,
   conferindo a senha atual.
-* ``ForgotPasswordSerializer`` / ``ResetPasswordSerializer`` — fluxo
-  simplificado de recuperação de senha via :class:`users.models.PasswordResetToken`.
+* ``ForgotPasswordSerializer`` / ``ResetPasswordSerializer`` — fluxo de
+  recuperação de senha via :class:`users.models.PasswordResetToken`, em que o
+  ``ForgotPasswordSerializer`` localiza o usuário pelo email e envia o token
+  por mensagem.
 
 Tanto a troca quanto a redefinição de senha invalidam os tokens de autenticação
 existentes do usuário.
