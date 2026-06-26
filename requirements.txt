@@ -7,6 +7,8 @@ drf-spectacular==0.29.0
 # Deploy
 gunicorn==23.0.0
 whitenoise==6.8.2
+dj-database-url==2.3.0
+psycopg[binary]==3.2.3
 
 # Automáticas
 asgiref==3.11.1
